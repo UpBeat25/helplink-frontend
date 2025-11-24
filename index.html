@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/entry/start.BZnFK1WO.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/NFEPWjS1.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/BRv6vdad.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/BH8DMBu3.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/BLVPUww8.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/entry/app.DB_7q4kd.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/PPVm8Dsz.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/DsnmJJEf.js">
+		<link rel="modulepreload" href="/helplink-frontend/_app/immutable/chunks/v_Bvmvnk.js">
+		<link rel="manifest" href="/helplink-frontend/manifest.json">
+		<title>Helplink: Lend a Hand</title>
+	</head>
+	<body data-sveltekit-preload-data="none">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_1k3oja5 = {
+						base: "/helplink-frontend",
+						assets: "/helplink-frontend"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("/helplink-frontend/_app/immutable/entry/start.BZnFK1WO.js"),
+						import("/helplink-frontend/_app/immutable/entry/app.DB_7q4kd.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+
+					if ('serviceWorker' in navigator) {
+						addEventListener('load', function () {
+							navigator.serviceWorker.register('/helplink-frontend/service-worker.js');
+						});
+					}
+				}
+			</script>
+		</div>
+	</body>
+</html>
