@@ -1,9 +1,9 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-cloudflare';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
-const config = {
-  kit: {
-    adapter: adapter(),
-  }
+export default {
+    preprocess: vitePreprocess(),
+    kit: {
+        adapter: adapter()
+    }
 };
-
-export default config;
