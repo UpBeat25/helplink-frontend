@@ -1,39 +1,52 @@
 <script lang="ts">
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
+  import SideMenu from "$lib/components/menu.svelte";
   import Arrow from "@lucide/svelte/icons/arrow-down";
-  import Menu from "@lucide/svelte/icons/menu";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import * as Item from "$lib/components/ui/item/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as Sheet from "$lib/components/ui/sheet/index.js";
+  import KarmaCounter from "$lib/components/karma.svelte";
   import { Label } from "$lib/components/ui/label/index.js";
   import Separator from "$lib/components/ui/separator/separator.svelte";
   import { pb } from "$lib/pocketbase";
   import { goto } from "$app/navigation";
   import { toast } from "svelte-sonner";
+  import { onMount } from "svelte";
 
   let { records } = $props();
 
-  const user = pb.authStore.record;
-  if (!user) {
-    toast.error("You must be logged in");
-    goto("/login");
-  } 
+  let ratings = $state<any>({});
 
-  async function logout() {
-    pb.authStore.clear();
-    await goto("/login");
-  }
+  const user = pb.authStore.record;
+
+  onMount(() => {
+    if (!user) {
+      toast.error("You must be logged in");
+      goto("/login");
+    }
+  }); 
 
   async function get_tasks() {
     if (!user) return toast.error("You must be logged in");
 
-    records = await pb.collection("status").getFullList({
+    const fetchedRecords = await pb.collection("status").getFullList({
       filter: `user="${user.id}"`,
       sort: "-created",
       expand: "task,task.uploaded_by"
     });
+
+    // Initialize ratings for each task owner
+    const newRatings: any = {};
+    for (let record of fetchedRecords) {
+      const ownerId = record.expand?.task?.uploaded_by;
+      if (ownerId && !newRatings[ownerId]) {
+        newRatings[ownerId] = 5; // Default rating
+      }
+    }
+    
+    ratings = newRatings;
+    records = fetchedRecords;
   }
   get_tasks();
 
@@ -57,33 +70,46 @@
       console.error(e);
     }
   }
+
+  async function mark_completed(taskId: string, ownerId: string) {
+    try {
+      const statusRecord = await pb.collection('status').getFirstListItem(
+        `task = "${taskId}" && user = "${user?.id}"`
+      );
+
+      // Update the task owner's karma
+      const owner = await pb.collection("users").getOne(ownerId);
+      const newKarma = ratings[ownerId] || 5;
+      
+      await pb.collection("users").update(ownerId, {
+        karma: owner.karma + newKarma
+      });
+
+      // Mark status as completed
+      await pb.collection('status').update(statusRecord.id, {
+        status: "completed"
+      });
+
+      toast.success(`Task Completed & Rating Submitted`);
+
+      await get_tasks();
+    } catch (e) {
+      toast.error("Error updating task status");
+      console.error(e);
+    }
+  }
 </script>
 
 <div class="pr-3 pt-8 pl-3 font-mono">
   <h1 class="text-3xl mb-4"><b>View Tasks</b></h1>
   <Separator />
-  <Sheet.Root>
-    <Sheet.Trigger>
-      <Button size="icon" variant="outline" class="rounded-full absolute top-7 right-4" aria-label="menu">
-        <Menu />
-      </Button>
-    </Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
-        <Sheet.Description>
-          Navigate through the app using the options below.
-        </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>View Tasks</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
-      </Sheet.Header>
-      <Sheet.Footer>
-        <Button variant="outline" type="button" class="color-red" onclick={logout}>Logout</Button>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
+  <SideMenu />
+
+  {#if !records || records.length === 0}
+    <div class="flex items-center justify-center mt-8 text-muted-foreground">
+      <div>No offers made yet...</div>
+    </div>
+  {/if}
 
   {#each records as record}
     {@const task = record.expand.task}
@@ -91,9 +117,9 @@
     <div class="flex w-full flex-col gap-2 px-4">
       <Collapsible.Root class="w-full max-w-sm mx-auto space-y-2">
         <Item.Root variant="outline">
-          <Item.Media>
+          <Item.Media onclick={() => {goto(`/profile/${owner?.username}`)}}>
             <Avatar.Root class="size-10">
-              <a href={"/profile/" + owner?.username}><Avatar.Fallback>{owner?.username?.[0]?.toUpperCase()}</Avatar.Fallback></a>
+              <Avatar.Fallback>{owner?.username?.[0]?.toUpperCase()}</Avatar.Fallback>
             </Avatar.Root>
           </Item.Media>
 
@@ -101,6 +127,38 @@
             <Item.Title>{task?.title}</Item.Title>
             <Item.Description>Status: {record.status}</Item.Description>
           </Item.Content>
+          {#if record.status == "accepted"}
+            <div class="flex justify-end">
+              <Dialog.Root>
+              <Dialog.Trigger>
+                <Button>
+                  Mark as Complete
+                </Button>
+              </Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Rate Task Owner</Dialog.Title>
+                  <Dialog.Description>
+                    Give karma (1–10) to {owner?.username}
+                  </Dialog.Description>
+                </Dialog.Header>
+                
+                <div class="border rounded-xl p-4">
+                  <KarmaCounter bind:value={ratings[owner?.id]} />
+                </div>
+  
+                <Dialog.Footer class="mt-4">
+                  <Dialog.Close>
+                    <Button onclick={() => mark_completed(task.id, owner?.id)}>
+                      Submit Rating
+                    </Button>
+                  </Dialog.Close>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
+
+            </div>
+          {/if}
 
           <Item.Actions>
             <Collapsible.Trigger>
@@ -134,7 +192,7 @@
           {/if}
           <Label>Posted by: {owner?.username}</Label>
 
-          {#if record.status !== "accepted"}
+          {#if record.status === "pending"}
             <Dialog.Root>
               <Dialog.Trigger class="w-full">
                 <Button class="w-full" variant="destructive">

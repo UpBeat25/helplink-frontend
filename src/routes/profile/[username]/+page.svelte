@@ -37,7 +37,8 @@
         <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
       </Sheet.Header>
       <Sheet.Footer>
-        <Button variant="outline" type="button" class="color-red" onclick={logout}>Logout</Button>
+        <Button variant="outline" type="button" onclick={() => {goto(`/profile/${user?.username}`)}}>Your Profile</Button>
+        <Button variant="ghost" type="button" onclick={logout}><span style="color: red">Logout</span></Button>
       </Sheet.Footer>
     </Sheet.Content>
   </Sheet.Root>

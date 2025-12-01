@@ -17,7 +17,7 @@
 			processing = true;
 			status = "";
 
-			await pb.collection("users").authWithPassword(email, password);
+			await pb.collection("users").authWithPassword(email.toLowerCase(), password);
 			document.cookie = pb.authStore.exportToCookie();
 			toast.success("Logged in successfully!");
 			const params = new URLSearchParams(window.location.search);

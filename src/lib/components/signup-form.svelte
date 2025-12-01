@@ -35,7 +35,7 @@
 			const formData = new FormData();
 			formData.append("name", name);
 			formData.append("username", username);
-			formData.append("email", email);
+			formData.append("email", email.toLowerCase());
 			formData.append("dob", dob);
 			formData.append("password", password);
 			formData.append("passwordConfirm", confirmPassword);

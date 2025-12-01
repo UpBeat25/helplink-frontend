@@ -4,10 +4,9 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import Arrow from "@lucide/svelte/icons/arrow-down";
   import Funnel from "@lucide/svelte/icons/funnel";
-  import Menu from "@lucide/svelte/icons/menu";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import * as Item from "$lib/components/ui/item/index.js";
-  import * as Sheet from "$lib/components/ui/sheet/index.js";
+  import SideMenu from "$lib/components/menu.svelte";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
   import { Slider } from "$lib/components/ui/slider/index.js";
   import { Spinner } from "$lib/components/ui/spinner/index.js";
@@ -23,7 +22,7 @@
   let records = $state<any[]>([]);
   let volunteeredTaskIds = $state<Set<string>>(new Set());
   
-  let value = $state(33);
+  let value = $state(250);
   let selected = $state("offline");
   let offer_texts = $state<Record<string, string>>({});
   let processing = $state(false);
@@ -172,8 +171,8 @@
     processing = true;
     
     try {
-      const existing = await pb.collection("volunteer").getFullList({
-        filter: `help_request="${id}" && volunteers="${user.id}"`
+      const existing = await pb.collection("status").getFullList({
+        filter: `task="${id}" && user="${user.id}"`
       });
 
       if (existing.length > 0) {
@@ -187,11 +186,6 @@
         task: id,
         offer: offer,
         status: "pending"
-      });
-
-      await pb.collection("volunteer").create({
-        help_request: id,
-        volunteers: user.id
       });
 
       toast.success("Help offer sent successfully!");
@@ -214,28 +208,7 @@
   <h1 class="text-3xl mb-4"><b>HelpLink.</b></h1>
   <Separator></Separator>
   
-  <Sheet.Root>
-    <Sheet.Trigger>
-      <Button size="icon" variant="outline" class="rounded-full absolute top-7 right-4" aria-label="menu">
-        <Menu />
-      </Button>
-    </Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
-        <Sheet.Description>
-          Navigate through the app using the options below.
-        </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>View Tasks</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
-      </Sheet.Header>
-      <Sheet.Footer>
-        <Button variant="outline" type="button" class="color-red" onclick={logout}>Logout</Button>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
+  <SideMenu />
 
   <Drawer.Root>
     <Drawer.Trigger>
@@ -259,7 +232,7 @@
           </div>
           <br>
           <div class="flex items-center justify-center space-x-2">
-            <span>0</span><Slider type="single" bind:value max={1000} step={10} /><span>1km</span>
+            <span>0</span><Slider type="single" bind:value max={3000} step={10} /><span>3km</span>
           </div>
         </div>
         {/if}
@@ -275,7 +248,7 @@
 
   {#if records.length === 0 && latitude !== 0}
     <div class="flex items-center justify-center mt-8 text-muted-foreground">
-      <p>No tasks found in your area.</p>
+      <p>No tasks found in your area...</p>
     </div>
   {/if}
 

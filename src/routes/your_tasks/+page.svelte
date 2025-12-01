@@ -3,51 +3,66 @@
   import X from '@lucide/svelte/icons/x';
   import { Button } from "$lib/components/ui/button/index.js";
   import Arrow from "@lucide/svelte/icons/arrow-down";
-  import Menu from "@lucide/svelte/icons/menu";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import * as Item from "$lib/components/ui/item/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as Sheet from "$lib/components/ui/sheet/index.js";
-  import { Spinner } from "$lib/components/ui/spinner/index.js";
+  import KarmaCounter from "$lib/components/karma.svelte";
   import { Label } from "$lib/components/ui/label/index.js";
   import Separator from "$lib/components/ui/separator/separator.svelte";
   import { pb } from "$lib/pocketbase";
   import { goto } from "$app/navigation";
   import { toast } from "svelte-sonner";
+  import { onMount } from "svelte";
+  import SideMenu from "$lib/components/menu.svelte";
+
+  let ratings = $state<any>({});
 
   let { records } = $props();
 
   const user = pb.authStore.record;
-  if (!user) {
-    toast.error("You must be logged in");
-    goto('/login');
-  } 
 
-  async function logout() {
-    pb.authStore.clear();
-    await goto("/login");
-  }
-
-  async function get_your_tasks() {
+  onMount(async () => {
+    const user = pb.authStore.record;
+    
     if (!user) {
       toast.error("You must be logged in");
-      goto("/login");
+      goto("/login"); // ✅ safe: only runs on client
       return;
     }
+
+    await get_your_tasks(user);
+  });
+
+  async function get_your_tasks(user: any) {
+    if (!user) return;
+
     const tasks = await pb.collection("tasks").getFullList({
       filter: `uploaded_by="${user.id}"`,
       sort: "-created"
     });
+
+    const newRatings: any = {}; // Build new ratings object
 
     for (let task of tasks) {
       const statusList = await pb.collection("status").getFullList({
         filter: `task="${task.id}"`,
         expand: "user"
       });
+
       task.status_list = statusList;
-      task.hasAccepted = statusList.some(s => s.status === "accepted");
+
+      for (let status of statusList) {
+        newRatings[status.id] = 5; // Default rating of 5
+      }
+
+      // NEW — all volunteers must be accepted
+      task.allAccepted = statusList.length > 0 && statusList.every(s => s.status === "accepted");
+
+      // NEW — all volunteers must be completed
+      task.allCompleted = statusList.length > 0 && statusList.every(s => s.status === "completed");
     }
 
+    ratings = newRatings; // Reassign for reactivity
     records = tasks;
   }
 
@@ -61,16 +76,51 @@
     }
   }
 
-  async function delete_task(taskId: string, status: string) {
+  async function delete_task(taskId: string) {
     try {
       await delete_all_status_for_task(taskId);
       await pb.collection("tasks").delete(taskId);
-      toast.success(`Task ${status}`);
-      get_your_tasks(); // refresh
+      toast.success(`Task Deleted`);
+      get_your_tasks(user); // refresh
     } catch (e) {
       toast.error("Error deleting task");
     }
   }
+  
+  async function mark_completed(taskId: string) {
+    try {
+      await delete_all_status_for_task(taskId);
+      await pb.collection("tasks").delete(taskId);
+      toast.success(`Task Completed`);
+      get_your_tasks(user); // refresh
+    } catch (e) {
+      toast.error("Error deleting task");
+    }
+  }
+
+  async function submitKarma(record: any) {
+    try {
+      for (let status of record.status_list) {
+        const userId = status.expand.user.id;
+        const karmaToAdd = ratings[status.id];
+
+        // Fetch current user to get their existing karma
+        const volunteer = await pb.collection("users").getOne(userId);
+
+        // Increment the user's karma
+        await pb.collection("users").update(userId, {
+          karma: volunteer.karma + karmaToAdd
+        });
+      }
+
+      toast.success("Ratings submitted successfully!");
+      await mark_completed(record.id);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to submit karma");
+    }
+  }
+
 
   async function update_status(status_id: string, new_status: "accepted" | "rejected") {
     try {
@@ -80,41 +130,25 @@
 
       toast.success(`Volunteer ${new_status}`);
       // Refresh UI
-      location.reload();
+      await get_your_tasks(user);
     } catch (err) {
       console.error(err);
       toast.error("Unable to update status");
     }
   }
-  get_your_tasks();
 
 </script>
 
 <div class="pr-3 pt-8 pl-3 font-mono">
   <h1 class="text-3xl mb-4"><b>Your Tasks</b></h1>
   <Separator />
-  <Sheet.Root>
-    <Sheet.Trigger>
-      <Button size="icon" variant="outline" class="rounded-full absolute top-7 right-4" aria-label="menu">
-        <Menu />
-      </Button>
-    </Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
-        <Sheet.Description>
-          Navigate through the app using the options below.
-        </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>View Tasks</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
-      </Sheet.Header>
-      <Sheet.Footer>
-        <Button variant="outline" type="button" class="color-red" onclick={logout}>Logout</Button>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
+  <SideMenu />
+
+  {#if !records || records.length === 0}
+    <div class="flex items-center justify-center mt-8 text-muted-foreground">
+      <p>No active tasks uploaded by you...</p>
+    </div>
+  {/if}
 
   {#each records as record}
     <div class="flex w-full flex-col gap-2 px-4">
@@ -126,22 +160,65 @@
             <Item.Description>View Volunteers</Item.Description>
           </Item.Content>
 
-          {#if !record.hasAccepted}
-            <div class="flex justify-end">
-              <Button
-                variant="destructive"
-                onclick={() => delete_task(record.id, "deleted")}
-              >
-                Delete Task
-              </Button>
-            </div>
+          <!-- Show Delete Task only if no volunteers OR none accepted -->
+          {#if !record.allAccepted && !record.allCompleted}
+            <Button variant="destructive" onclick={() => delete_task(record.id)}>
+              Delete Task
+            </Button>
           {:else}
-            <div class="flex justify-end">
-              <Button onclick={() => delete_task(record.id, "completed")}>
-                Completed
-              </Button>
-            </div>
+            <!-- Show Mark as Complete only if all are accepted -->
+            <Dialog.Root>
+              <Dialog.Trigger><Button disabled={!record.allCompleted}>
+                Mark as Complete
+              </Button></Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Rate Volunteers</Dialog.Title>
+                  <Dialog.Description>
+                    Give karma (1–10) to each volunteer.
+                  </Dialog.Description>
+                </Dialog.Header>
+                {#each record.status_list as status}
+                  <div class="border rounded-xl p-4">
+                    <div class="font-semibold text-lg mb-2">
+                      {status.expand.user.username}
+                    </div>
+                    <KarmaCounter bind:value={ratings[status.id]} />
+                  </div>
+                {/each}
+  
+                <Dialog.Footer class="mt-4">
+                    <Dialog.Root>
+                      <Dialog.Trigger>
+                        <Button>
+                          Submit Ratings
+                        </Button>
+                      </Dialog.Trigger>
+                      <Dialog.Content class="sm:max-w-[425px]">
+                        <Dialog.Header>
+                          <Dialog.Title>Make the Day More Memorable?</Dialog.Title>
+                          <Dialog.Description>
+                            This is completely optional but we would appreciate if you shared a selfie of you and the others to remember this day. Kindly attach the selfie with the instagram usernames of the the people so that they can be tagged.
+                          </Dialog.Description>
+                        </Dialog.Header>
+                        <div class="grid gap-4 py-4">
+                          <div class="grid grid-cols-4 items-center gap-4">
+                            <a href="mailto:helplink2048@gmail.com" class="w-full">
+                              <Button>Email</Button>
+                            </a>
+                          </div>
+                        </div>
+                        <Dialog.Footer>
+                          <Button type="submit" onclick={() => {submitKarma(record)}}>Thank you!</Button>
+                        </Dialog.Footer>
+                      </Dialog.Content>
+                    </Dialog.Root>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
+
           {/if}
+
           <Item.Actions>
             <Collapsible.Trigger>
               <Button size="icon" variant="outline" class="rounded-full">
@@ -171,7 +248,7 @@
                   </div>
 
                   <!-- Right section -->
-                  {#if status.status != "accepted" && status.status != "rejected"}
+                  {#if status.status === "pending"}
                     <div class="flex justify-end gap-2">
                       <Button
                         variant="secondary"
