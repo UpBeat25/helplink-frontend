@@ -203,7 +203,7 @@
                         </Dialog.Header>
                         <div class="grid gap-4 py-4">
                           <div class="grid grid-cols-4 items-center gap-4">
-                            <a href="mailto:helplink2048@gmail.com" class="w-full">
+                            <a href="https://instagram.com/helplink.dev" class="w-full">
                               <Button>Email</Button>
                             </a>
                           </div>
