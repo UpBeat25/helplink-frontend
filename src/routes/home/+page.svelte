@@ -258,7 +258,7 @@
       <div class="flex w-full flex-col gap-2 px-4 mt-4">
         <Collapsible.Root class="w-full max-w-sm mx-auto space-y-2">
           <Item.Root variant="outline">
-            <Item.Media>
+            <Item.Media onclick={() => {goto(`/profile/${user_r?.username}`)}}>
               <Avatar.Root class="size-10">
                 <Avatar.Fallback>{user_r?.username?.[0]?.toUpperCase() || 'U'}</Avatar.Fallback>
               </Avatar.Root>
