@@ -232,7 +232,7 @@
           </div>
           <br>
           <div class="flex items-center justify-center space-x-2">
-            <span>0</span><Slider type="single" bind:value max={3000} step={10} /><span>3km</span>
+            <span>0</span><Slider type="single" bind:value max={5000} step={10} /><span>5km</span>
           </div>
         </div>
         {/if}
