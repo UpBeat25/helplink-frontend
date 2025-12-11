@@ -1,6 +1,6 @@
 import PocketBase from "pocketbase";
 
-export const pb = new PocketBase("http://localhost:8090"); //https://api.helplink.dev
+export const pb = new PocketBase("https://api.helplink.dev"); //https://api.helplink.dev
 
 // Override the send method for custom fetch behavior
 const originalSend = pb.send.bind(pb);

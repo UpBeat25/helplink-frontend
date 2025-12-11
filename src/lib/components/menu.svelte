@@ -21,14 +21,19 @@
     </Sheet.Trigger>
     <Sheet.Content>
       <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
+        <Sheet.Title>MENU{#if user?.is_ngo}: NGO Account{/if}</Sheet.Title>
         <Sheet.Description>
           Navigate through the app using the options below.
         </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>Your Offers</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
+        {#if !user?.is_ngo}
+          <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
+          <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
+          <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>Your Offers</Button>
+          <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
+        {:else}
+          <Button variant="outline" type="button" onclick={() => {goto("/upload_ngo")}}>Create A New Event</Button>
+          <Button variant="outline" type="button" onclick={() => {goto("/your_events")}}>Your Active Events</Button>
+        {/if}  
       </Sheet.Header>
       <Sheet.Footer>
         <Button variant="outline" type="button" onclick={() => {goto(`/profile/${user?.username}`)}}>Your Profile</Button>

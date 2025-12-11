@@ -5,52 +5,70 @@
   export const prerender = false;
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-6">
-  <div class="w-full max-w-md space-y-8">
+<div class="min-h-screen flex items-center justify-center p-6 bg-background">
+  <div class="w-full max-w-md space-y-10">
 
     <!-- Header -->
     <div class="text-center space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight">HelpLink.</h1>
+      <h1 class="text-4xl font-bold tracking-tight">HelpLink</h1>
       <p class="text-sm text-muted-foreground">
-        Add this website to your home screen for a seamless, app-like experience.
+        Install HelpLink on your device for a fast, app-like experience.
       </p>
     </div>
 
-    <!-- Card -->
-    <Card class="rounded-2xl">
+    <!-- Main Card -->
+    <Card class="rounded-3xl shadow-lg p-2">
       <CardHeader>
-        <CardTitle class="text-lg font-semibold">How to Install</CardTitle>
+        <CardTitle class="text-xl font-semibold">How to Install</CardTitle>
         <CardDescription>
-          Follow these simple steps on your phone's browser.
+          Choose your device or platform below.
         </CardDescription>
       </CardHeader>
 
       <Separator />
 
-      <CardContent class="pt-6 space-y-4">
-        <ol class="space-y-3 text-sm">
+      <CardContent class="pt-6 space-y-8">
 
-          <li class="flex gap-3">
-            <span class="font-medium text-foreground">1.</span>
-            <span>Tap your browser’s menu (<strong>⋮</strong>) in the top-right corner.</span>
-          </li>
+        <!-- ANDROID -->
+        <div class="space-y-3">
+          <h2 class="text-lg font-bold">📱 Android (Chrome)</h2>
+          <ol class="space-y-3 text-sm">
+            <li class="flex gap-3"><span class="font-medium">1.</span><span>Tap the menu icon (<strong>⋮</strong>) at the top-right.</span></li>
+            <li class="flex gap-3"><span class="font-medium">2.</span><span>Select <strong>Add to Home screen</strong>.</span></li>
+            <li class="flex gap-3"><span class="font-medium">3.</span><span>Press <strong>Install</strong>.</span></li>
+          </ol>
+        </div>
 
-          <li class="flex gap-3">
-            <span class="font-medium text-foreground">2.</span>
-            <span>Select <strong>Add to Home screen</strong>.</span>
-          </li>
+        <Separator />
 
-          <li class="flex gap-3">
-            <span class="font-medium text-foreground">3.</span>
-            <span>Press <strong>Install</strong> when prompted.</span>
-          </li>
+        <!-- iOS -->
+        <div class="space-y-3">
+          <h2 class="text-lg font-bold">🍎 iOS (Safari)</h2>
+          <ol class="space-y-3 text-sm">
+            <li class="flex gap-3"><span class="font-medium">1.</span><span>Tap the <strong>Share</strong> button (square with arrow).</span></li>
+            <li class="flex gap-3"><span class="font-medium">2.</span><span>Scroll down and tap <strong>Add to Home Screen</strong>.</span></li>
+            <li class="flex gap-3"><span class="font-medium">3.</span><span>Tap <strong>Add</strong> in the top-right.</span></li>
+          </ol>
+        </div>
 
-        </ol>
+        <Separator />
+
+        <!-- Instagram in-app Browser -->
+        <div class="space-y-3">
+          <h2 class="text-lg font-bold">📷 Using Instagram</h2>
+          <p class="text-sm">Instagram opens links inside its own browser, which doesn't allow installation. Follow these steps:</p>
+          <ol class="space-y-3 text-sm">
+            <li class="flex gap-3"><span class="font-medium">1.</span><span>Tap the <strong>three dots</strong> (⋯) in the top-right of the Instagram browser.</span></li>
+            <li class="flex gap-3"><span class="font-medium">2.</span><span>Select <strong>Open in Browser</strong>.</span></li>
+            <li class="flex gap-3"><span class="font-medium">3.</span><span>Then follow the Android or iOS steps above based on your device.</span></li>
+          </ol>
+        </div>
+
       </CardContent>
     </Card>
 
     <p class="text-xs text-center text-muted-foreground">
-      Once installed, the app will appear on your home screen.
+      After installation, HelpLink will appear on your home screen just like any other app.
     </p>
   </div>
 </div>

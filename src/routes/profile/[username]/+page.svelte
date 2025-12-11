@@ -1,73 +1,63 @@
 <script lang="ts">
-  import * as Card from "$lib/components/ui/card";
-  import { Badge } from "$lib/components/ui/badge";
-  import Separator from "$lib/components/ui/separator/separator.svelte";
-  import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
-  import Label from "$lib/components/ui/label/label.svelte";
-  import * as Sheet from "$lib/components/ui/sheet/index.js";
-  import { Button } from "$lib/components/ui/button/index.js";
-  import Menu from "@lucide/svelte/icons/menu";
-  import { goto } from "$app/navigation";
-  import { pb } from "$lib/pocketbase";
-  
-  export let data;
-  const { user } = data;
+	import * as Card from '$lib/components/ui/card';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import Flag from '@lucide/svelte/icons/flag';
+	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import SideMenu from '$lib/components/menu.svelte';
+	import { goto } from '$app/navigation';
 
-    async function logout() {
-        pb.authStore.clear();
-        await goto("/login");
-    }
-
+	export let data;
+	const { user } = data;
 </script>
-  <Sheet.Root>
-    <Sheet.Trigger>
-      <Button size="icon" variant="outline" class="rounded-full absolute top-7 right-4" aria-label="menu">
-        <Menu />
-      </Button>
-    </Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
-        <Sheet.Description>
-          Navigate through the app using the options below.
-        </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>View Tasks</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
-      </Sheet.Header>
-      <Sheet.Footer>
-        <Button variant="outline" type="button" onclick={() => {goto(`/profile/${user?.username}`)}}>Your Profile</Button>
-        <Button variant="ghost" type="button" onclick={logout}><span style="color: red">Logout</span></Button>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
-<div class="min-h-screen flex items-center justify-center">
-    <div class="mx-auto max-w-2xl p-6 space-y-8 font-mono">
-        <!-- Profile Header -->
-        <Card.Root class="p-6 space-y-1">
-            <div class="items-center">
-                <Avatar class="w-30 h-30 mb-4">
-                    <AvatarFallback class="text-4xl font-bold">{user.username[0].toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <h1 class="text-xl font-bold">{user.name}</h1>
-                <p class="text-sm text-muted-foreground">@{user.username}</p>
-            </div>
-            <div>
-                <Label>Date of Birth</Label>
-                <p class="text-sm text-muted-foreground">
-                {new Intl.DateTimeFormat("en-US", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric"
-                }).format(new Date(user.dob))}
-                </p>
-            </div>
-            <Separator />
-            <div class="flex gap-3">
-                <Badge>Karma: {user.karma}</Badge>
-                <Badge variant="secondary">Joined {new Date(user.created).toDateString()}</Badge>
-            </div>
-        </Card.Root>
-    </div>
+
+<SideMenu />
+<div class="flex min-h-screen items-center justify-center">
+	<div class="mx-auto max-w-2xl space-y-8 p-6 font-mono">
+		<!-- Profile Header -->
+		<Card.Root class="space-y-1 p-6">
+			<div class="items-center">
+				<Avatar class="w-30 h-30 mb-4">
+					<AvatarFallback class="text-4xl font-bold"
+						>{user.username[0].toUpperCase()}</AvatarFallback
+					>
+				</Avatar>
+				<h1 class="text-xl font-bold">{user.name}</h1>
+				<p class="text-muted-foreground text-sm">@{user.username}</p>
+			</div>
+			<div>
+				<Label>Date of Birth</Label>
+				<p class="text-muted-foreground text-sm">
+					{new Intl.DateTimeFormat('en-US', {
+						day: 'numeric',
+						month: 'long',
+						year: 'numeric'
+					}).format(new Date(user.dob))}
+				</p>
+			</div>
+			<Separator />
+			<div class="flex gap-3">
+				<Badge>Karma: {user.karma}</Badge>
+				{#if user.is_ngo}
+					<Badge>Events Hosted: {user.events_attended}</Badge>
+					<Badge variant="secondary" class="bg-blue-500 text-white dark:bg-emerald-600">
+						<BadgeCheckIcon />
+						Verified NGO
+					</Badge>
+				{:else}
+					<Badge>Events Attended: {user.events_attended}</Badge>
+				{/if}
+				<Badge variant="secondary">Joined {new Date(user.created).toDateString()}</Badge>
+			</div>
+		</Card.Root>
+		<Button
+			class="h-10 w-10 bg-red-500"
+			onclick={() => {
+				goto('mailto:helplink2048@gmail.com');
+			}}><Flag /></Button
+		>
+	</div>
 </div>

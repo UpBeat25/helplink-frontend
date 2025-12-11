@@ -4,20 +4,19 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
-	import Menu from "@lucide/svelte/icons/menu";
 	import {
 		FieldGroup,
 		Field,
 		FieldLabel,
 	} from "$lib/components/ui/field/index.js";
 	import { goto } from "$app/navigation";
-	import * as Sheet from "$lib/components/ui/sheet/index.js";
 	import { Textarea } from "$lib/components/ui/textarea/index.js";
-	import { toast, Toaster } from "svelte-sonner";
+	import { toast } from "svelte-sonner";
 	import { pb } from "$lib/pocketbase"
 	import { Spinner } from "$lib/components/ui/spinner/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+	import SideMenu from "$lib/components/menu.svelte";
 	import "leaflet/dist/leaflet.css";
 
 	// Form Details
@@ -138,11 +137,6 @@
 		}
 	});
 
-	async function logout() {
-		pb.authStore.clear();
-		await goto("/login");
-	}
-
 	async function onSubmit(e: Event) {
 		processing = true;
 		if (!user) {
@@ -173,30 +167,8 @@
 		
 	}
 </script>
-  <Sheet.Root>
-    <Sheet.Trigger>
-      <Button size="icon" variant="outline" class="rounded-full absolute top-7 right-4" aria-label="menu">
-        <Menu />
-      </Button>
-    </Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>MENU</Sheet.Title>
-        <Sheet.Description>
-          Navigate through the app using the options below.
-        </Sheet.Description>
-        <Button variant="outline" type="button" onclick={() => {goto("/home")}}>Home</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/upload")}}>New Request</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/view_tasks")}}>View Tasks</Button>
-        <Button variant="outline" type="button" onclick={() => {goto("/your_tasks")}}>Your Tasks</Button>
-      </Sheet.Header>
-      <Sheet.Footer>
-        <Button variant="outline" type="button" onclick={() => {goto(`/profile/${user?.username}`)}}>Your Profile</Button>
-        <Button variant="ghost" type="button" onclick={logout}><span style="color: red">Logout</span></Button>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
 
+<SideMenu/>
 <Card.Root class="mx-auto w-full max-w-sm">
 	<Card.Header>
 		<Card.Title class="text-2xl">Ask For a Hand</Card.Title>

@@ -35,7 +35,7 @@
 <Card.Root class="mx-auto w-full max-w-sm">
 	<Card.Header>
 		<Card.Title class="text-2xl">Login</Card.Title>
-		<Card.Description>Enter your email below to log in to your account</Card.Description>
+		<Card.Description>Use your email to log in to your account</Card.Description>
 	</Card.Header>
 
 	<Card.Content>
@@ -72,8 +72,9 @@
 						<Button type="submit" class="w-full">Login</Button>
 					{/if}
 
-					<Field.Description class="text-center mt-2">
-						Don’t have an account? <a href="/signup">Sign up</a>
+					<Field.Description class="text-center mt-3">
+						Don’t have an account? <a href="/signup">Sign up!</a><br>
+						Are you a NGO? <a href="mailto:helplink2048@gmail.com">Contact Us!</a>
 					</Field.Description>
 				</Field.Field>
 			</Field.Group>
