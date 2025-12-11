@@ -263,8 +263,6 @@
       </div>
     </Drawer.Content>
   </Drawer.Root>
->>>>>>> c736212700bd96afe40a837341b9e73e499b0120
-
 				{#if selected === 'offline'}
 					<div class="p-4 pb-0">
 						<div class="flex items-center justify-center space-x-2">
@@ -278,8 +276,6 @@
 						</div>
 					</div>
 				{/if}
-
-<<<<<<< HEAD
 				<Drawer.Footer>
 					<Drawer.Close>
 						<Button class="w-80">Submit</Button>
@@ -376,7 +372,7 @@
 			</div>
 		{/if}
 	{/each}
-=======
+
   {#each records as record}
     {#if !volunteeredTaskIds.has(record.id)}
       {@const user_r = record.expand?.uploaded_by}
@@ -422,5 +418,4 @@
       </div>
     {/if}
   {/each}
->>>>>>> c736212700bd96afe40a837341b9e73e499b0120
 </div>
