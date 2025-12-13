@@ -163,6 +163,11 @@
 						{record.description}
 					</div>
 
+					<Label>Passcode:</Label>
+					<div class="text-muted-foreground text-sm">
+						{record.private_note}
+					</div>
+
 					<Label class="text-sm">Volunteers:</Label>
 					<div class="text-sm">
 						{#each record.status_list as status}
@@ -175,7 +180,7 @@
 												>{status.expand.user.username}</a
 											>
 											– {#if status.status === 'accepted'}
-												Attendfing
+												Attendting
 											{:else}
 												{status.status}
 											{/if}
