@@ -219,7 +219,6 @@
 
 	<SideMenu />
 
-<<<<<<< HEAD
 	<Drawer.Root>
 		<Drawer.Trigger>
 			<Button
@@ -240,30 +239,6 @@
 					>
 					<br />
 				</Drawer.Header>
-=======
-        {#if selected === 'offline'}
-        <div class="p-4 pb-0">
-          <div class="flex items-center justify-center space-x-2">
-            <div class="text-7xl font-bold tracking-tighter">
-              {value} m
-            </div>
-          </div>
-          <br>
-          <div class="flex items-center justify-center space-x-2">
-            <span>0</span><Slider type="single" bind:value max={5000} step={10} /><span>5km</span>
-          </div>
-        </div>
-        {/if}
-        
-        <Drawer.Footer>
-          <Drawer.Close>
-            <Button class="w-80">Submit</Button>
-          </Drawer.Close>
-        </Drawer.Footer>
-      </div>
-    </Drawer.Content>
-  </Drawer.Root>
->>>>>>> c736212700bd96afe40a837341b9e73e499b0120
 
 				{#if selected === 'offline'}
 					<div class="p-4 pb-0">
@@ -279,7 +254,6 @@
 					</div>
 				{/if}
 
-<<<<<<< HEAD
 				<Drawer.Footer>
 					<Drawer.Close>
 						<Button class="w-80">Submit</Button>
@@ -376,51 +350,4 @@
 			</div>
 		{/if}
 	{/each}
-=======
-  {#each records as record}
-    {#if !volunteeredTaskIds.has(record.id)}
-      {@const user_r = record.expand?.uploaded_by}
-      <div class="flex w-full flex-col gap-2 px-4 mt-4">
-        <Collapsible.Root class="w-full max-w-sm mx-auto space-y-2">
-          <Item.Root variant="outline">
-            <Item.Media onclick={() => {goto(`/profile/${user_r?.username}`)}}>
-              <Avatar.Root class="size-10">
-                <Avatar.Fallback>{user_r?.username?.[0]?.toUpperCase() || 'U'}</Avatar.Fallback>
-              </Avatar.Root>
-            </Item.Media>
-            <Item.Content>
-              <Item.Title>{record.title}</Item.Title>
-              <Item.Description>{distance(latitude, longitude, record.lat, record.lng).toFixed(2)} meters away</Item.Description>
-            </Item.Content>
-            <Item.Actions>
-              <Collapsible.Trigger>
-                <Button size="icon" variant="outline" class="rounded-full" aria-label="expand">
-                  <Arrow />
-                </Button>
-              </Collapsible.Trigger>
-            </Item.Actions>
-          </Item.Root>
-          <Collapsible.Content class="space-y-2 rounded-md border px-4 py-3 font-mono">
-            <Label>Description:</Label>
-            <div class="text-sm text-muted-foreground">
-              {record.description}
-            </div>
-            <Label>{user_r?.username || 'Unknown User'}</Label>
-            <Input bind:value={offer_texts[record.id]} placeholder="Your Offer Here..." />
-            {#if !offer_texts[record.id]}
-              <Button type="submit" class="w-full" disabled>Help</Button>
-            {:else if processing}
-              <Button disabled class="w-full">
-                <Spinner class="mr-2" />
-                Uploading...
-              </Button>
-            {:else}
-              <Button class="w-full" onclick={() => help_user(record.id, offer_texts[record.id])}>Help</Button>
-            {/if}
-          </Collapsible.Content>
-        </Collapsible.Root>
-      </div>
-    {/if}
-  {/each}
->>>>>>> c736212700bd96afe40a837341b9e73e499b0120
 </div>

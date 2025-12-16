@@ -81,7 +81,9 @@
 			return;
 		}
 		try {
-			user.events_attended++;
+			await pb.collection('users').update(user.id, {
+				events_attended: user.events_attended + 1
+			});
 			await delete_all_status_for_task(taskId);
 			await pb.collection('tasks').delete(taskId);
 			toast.success(`Task Completed`);

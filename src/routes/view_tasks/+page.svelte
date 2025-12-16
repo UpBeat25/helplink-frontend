@@ -73,11 +73,13 @@
 	}
 
 	async function mark_completed_ngo(task: any, ownerId: string) {
-    	if (!user) {
+		if (!user) {
 			return;
 		}
 		if (passcode === task.private_note) {
-      		user.events_attended++;
+			await pb.collection('users').update(ownerId, {
+				events_attended: user.events_attended + 1
+			});
 			await mark_completed(task.id, ownerId);
 		} else {
 			toast.error('Incorrect Passcode');
@@ -92,17 +94,17 @@
 				.collection('status')
 				.getFirstListItem(`task = "${taskId}" && user = "${user?.id}"`);
 
+			// Mark status as completed
+			await pb.collection('status').update(statusRecord.id, {
+				status: 'completed'
+			});
+			
 			// Update the task owner's karma
 			const owner = await pb.collection('users').getOne(ownerId);
 			const newKarma = ratings[ownerId] || 5;
 
 			await pb.collection('users').update(ownerId, {
 				karma: owner.karma + newKarma
-			});
-
-			// Mark status as completed
-			await pb.collection('status').update(statusRecord.id, {
-				status: 'completed'
 			});
 
 			toast.success(`Task Completed & Rating Submitted`);
@@ -231,7 +233,7 @@
 									<div class="rounded-xl border p-4">
 										<KarmaCounter bind:value={ratings[owner?.id]} />
 									</div>
-                  
+
 									<Input bind:value={passcode} placeholder="Enter Event Passcode..." />
 
 									<Dialog.Footer class="mt-4">

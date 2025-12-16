@@ -15,8 +15,8 @@
 </script>
 
 <SideMenu />
-<div class="flex min-h-screen items-center justify-center">
-	<div class="mx-auto max-w-2xl space-y-8 p-6 font-mono">
+<div class="flex min-h-screen items-center justify-center overflow-hidden">
+	<div class="w-98 m-5 mx-auto space-y-8 p-6 font-mono">
 		<!-- Profile Header -->
 		<Card.Root class="space-y-1 p-6">
 			<div class="items-center">
@@ -39,18 +39,18 @@
 				</p>
 			</div>
 			<Separator />
-			<div class="flex gap-3">
+			<div class="">
 				<Badge>Karma: {user.karma}</Badge>
 				{#if user.is_ngo}
 					<Badge>Events Hosted: {user.events_attended}</Badge>
-					<Badge variant="secondary" class="bg-blue-500 text-white dark:bg-emerald-600">
+					<Badge variant="secondary" class="bg-blue-500 text-white dark:bg-emerald-600 mt-1">
 						<BadgeCheckIcon />
 						Verified NGO
 					</Badge>
 				{:else}
 					<Badge>Events Attended: {user.events_attended}</Badge>
 				{/if}
-				<Badge variant="secondary">Joined {new Date(user.created).toDateString()}</Badge>
+				<Badge class="mt-1" variant="secondary">Joined {new Date(user.created).toDateString()}</Badge>
 			</div>
 		</Card.Root>
 		<Button
