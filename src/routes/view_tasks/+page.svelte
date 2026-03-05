@@ -19,6 +19,10 @@
 
 	let ratings = $state<any>({});
 
+	let privateNotes = $state<Record<string, string>>({});
+
+	let openTaskId = $state<string | null>(null);
+
 	let passcode = $state('');
 
 	const user = pb.authStore.record;
@@ -36,7 +40,22 @@
 		const fetchedRecords = await pb.collection('status').getFullList({
 			filter: `user="${user.id}"`,
 			sort: '-created',
-			expand: 'task,task.uploaded_by'
+			expand: 'task,task.uploaded_by',
+			fields: `
+			id,
+			status,
+			offer,
+			expand.task.id,
+			expand.task.title,
+			expand.task.by_ngo,
+			expand.task.description,
+			expand.task.share_loc,
+			expand.task.lat,
+    		expand.task.lng,
+			expand.task.uploaded_by,
+			expand.task.expand.uploaded_by.id,
+			expand.task.expand.uploaded_by.username
+		`
 		});
 
 		// Initialize ratings for each task owner
@@ -50,9 +69,25 @@
 
 		ratings = newRatings;
 		records = fetchedRecords;
+		for (let record of fetchedRecords) {
+			if (record.status === 'accepted') {
+				await getPrivateNote(record.expand?.task.id);
+			}
+		}
 	}
 	get_tasks();
 
+	async function getPrivateNote(taskId: string) {
+		try {
+			const task = await pb.collection('tasks').getOne(taskId, {
+				fields: 'private_note'
+			});
+
+			privateNotes[taskId] = task.private_note;
+		} catch (e) {
+			console.error('Failed to fetch private note');
+		}
+	}
 	async function remove_help(status_id: string) {
 		if (!user) {
 			toast.error('You must be logged in');
@@ -72,15 +107,15 @@
 		}
 	}
 
-	async function mark_completed_ngo(task: any, ownerId: string) {
+	async function mark_completed_ngo(task_id: any, priv: any, ownerId: string) {
 		if (!user) {
 			return;
 		}
-		if (passcode === task.private_note) {
+		if (passcode === priv) {
 			await pb.collection('users').update(ownerId, {
 				events_attended: user.events_attended + 1
 			});
-			await mark_completed(task.id, ownerId);
+			await mark_completed(task_id, ownerId);
 		} else {
 			toast.error('Incorrect Passcode');
 		}
@@ -98,7 +133,7 @@
 			await pb.collection('status').update(statusRecord.id, {
 				status: 'completed'
 			});
-			
+
 			// Update the task owner's karma
 			const owner = await pb.collection('users').getOne(ownerId);
 			const newKarma = ratings[ownerId] || 5;
@@ -116,48 +151,71 @@
 	}
 </script>
 
-<div class="pl-3 pr-3 pt-8 font-mono">
-	<h1 class="mb-4 text-3xl"><b>View Tasks</b></h1>
-	<Separator />
+<div class="pt-8 pr-3 pl-3 font-mono">
+	<h1 class="title-font mt-4 ml-2 text-4xl"><b>Your Offers.</b></h1>
+
 	<SideMenu />
 
 	{#if !records || records.length === 0}
-		<div class="text-muted-foreground mt-8 flex items-center justify-center">
+		<div class="mt-8 flex items-center justify-center text-muted-foreground">
 			<div>No offers made yet...</div>
 		</div>
 	{/if}
 
 	{#each records as record}
-		{@const task = record.expand.task}
-		{@const owner = task?.expand?.uploaded_by}
+		{@const task_id = record.expand.task.id}
+		{@const task_title = record.expand.task.title}
+		{@const task_by_ngo = record.expand.task.by_ngo}
+		{@const task_description = record.expand.task.description}
+		{@const owner = record.expand.task.expand.uploaded_by}
 		<div class="flex w-full flex-col gap-2 px-4">
-			<Collapsible.Root class="mx-auto w-full max-w-sm space-y-2">
-				<Item.Root variant="outline">
-					{#if !task.by_ngo}
-						<Item.Media
-							onclick={() => {
-								goto(`/profile/${owner?.username}`);
-							}}
-						>
-							<Avatar.Root class="size-10">
-								<Avatar.Fallback>{owner?.username?.[0]?.toUpperCase()}</Avatar.Fallback>
-							</Avatar.Root>
-						</Item.Media>
-					{/if}
-
-					<Item.Content>
-						{#if !task.by_ngo}
-							<Item.Title>{task.title}</Item.Title>
-							<Item.Description>Status: {task.status}</Item.Description>
-						{:else}
-							<Item.Title><b class="text-yellow-300">Event: </b>{task.title}</Item.Title>
-						{/if}
-					</Item.Content>
-					{#if record.status == 'accepted' && !task.by_ngo}
-						<div class="flex justify-end">
+			<Collapsible.Root
+				class="mx-auto w-full max-w-sm space-y-2"
+				open={openTaskId === record.id}
+				onOpenChange={(open) => {
+					openTaskId = open ? record.id : null;
+				}}
+			>
+				<Collapsible.Trigger class="w-full max-w-sm">
+					<Item.Root variant="outline">
+						<Item.Content>
+							<Label
+								style="cursor: pointer;"
+								onclick={() => {
+									goto(`/profile/${owner?.username}`);
+								}}
+								class="text-xs"
+							>
+								@{owner?.username || 'Unknown User'}
+								-
+							</Label>
+							{#if !task_by_ngo}
+								<Item.Title class="text-base"
+									><b class="text-emerald-400">Task: </b>{task_title}</Item.Title
+								>
+								<br />
+								<Item.Description
+									><b class="text-zinc-300">Status:</b>
+									{#if record.status == 'accepted'}
+										<span class="text-emerald-400">accepted</span>
+									{:else if record.status == 'pending'}
+										<span class="text-yellow-500">pending</span>
+									{:else if record.status == 'rejected'}
+										<span class="text-red-600">rejected</span>
+									{:else}
+										<span>completed</span>
+									{/if}
+								</Item.Description>
+							{:else}
+								<Item.Title class="text-base"
+									><b class="text-blue-600 dark:text-blue-300">Event: </b>{task_title}</Item.Title
+								>
+							{/if}
+						</Item.Content>
+						{#if record.status == 'accepted' && !task_by_ngo}
 							<Dialog.Root>
-								<Dialog.Trigger>
-									<Button>Mark as Complete</Button>
+								<Dialog.Trigger class="w-full">
+									<Button class="w-full bg-emerald-400">Mark as Complete</Button>
 								</Dialog.Trigger>
 								<Dialog.Content>
 									<Dialog.Header>
@@ -168,59 +226,55 @@
 									</Dialog.Header>
 
 									<div class="rounded-xl border p-4">
-										<KarmaCounter bind:value={ratings[owner?.id]} />
+										<KarmaCounter bind:value={ratings[owner.id]} />
 									</div>
 
 									<Dialog.Footer class="mt-4">
 										<Dialog.Close>
-											<Button onclick={() => mark_completed(task.id, owner?.id)}>
+											<Button onclick={() => mark_completed(task_id, owner?.id)}>
 												Submit Rating
 											</Button>
 										</Dialog.Close>
 									</Dialog.Footer>
 								</Dialog.Content>
 							</Dialog.Root>
-						</div>
-					{/if}
-
-					<Item.Actions>
-						<Collapsible.Trigger>
-							<Button size="icon" variant="outline" class="rounded-full">
-								<Arrow />
-							</Button>
-						</Collapsible.Trigger>
-					</Item.Actions>
-				</Item.Root>
+						{/if}
+					</Item.Root>
+				</Collapsible.Trigger>
 
 				<Collapsible.Content class="w-full space-y-2 rounded-md border px-4 py-3 font-mono">
 					<Label>Description:</Label>
-					<div class="text-muted-foreground text-sm">
-						{task?.description}
+					<div class="text-sm text-muted-foreground">
+						{task_description}
 					</div>
-					{#if !task.by_ngo}
+					{#if !task_by_ngo}
 						<Label class="text-sm">Your Offer:</Label>
-						<div class="text-muted-foreground text-sm">
+						<div class="text-sm text-muted-foreground">
 							{record.offer}
 						</div>
 					{/if}
 					{#if record.status === 'accepted'}
-						{#if !task.by_ngo}
+						{@const task_private_note = privateNotes[task_id]}
+						{@const task_share_loc = record.expand.task.share_loc}
+						{#if !task_by_ngo}
 							<Label>Private Note:</Label>
-							<div class="text-muted-foreground text-sm">
-								{task?.private_note}
+							<div class="text-sm text-muted-foreground">
+								{task_private_note}
 							</div>
 						{/if}
-						<Label>Posted by: {owner?.username}</Label>
-						{#if task.share_loc}
-							<Button class="w-full" href="https://www.google.com/maps?q={task.lat},{task.lng}">
+						{#if task_share_loc}
+							{@const task_lat = record.expand.task.lat}
+							{@const task_lng = record.expand.task.lng}
+							<Button class="w-full" href="https://www.google.com/maps?q={task_lat},{task_lng}">
 								Location
 							</Button>
 						{/if}
 
-						{#if task.by_ngo}
+						{#if task_by_ngo}
+							{@const priv = privateNotes[task_id]}
 							<Dialog.Root>
 								<Dialog.Trigger class="w-full">
-									<Button class="w-full bg-yellow-300">Mark as Complete</Button>
+									<Button class="w-full bg-blue-600 dark:bg-blue-300">Mark as Complete</Button>
 								</Dialog.Trigger>
 								<Dialog.Content>
 									<Dialog.Header>
@@ -238,7 +292,7 @@
 
 									<Dialog.Footer class="mt-4">
 										<Dialog.Close>
-											<Button onclick={() => mark_completed_ngo(task, owner?.id)}>
+											<Button onclick={() => mark_completed_ngo(task_id, priv, owner?.id)}>
 												Submit Rating
 											</Button>
 										</Dialog.Close>
@@ -252,7 +306,7 @@
 						<Dialog.Root>
 							<Dialog.Trigger class="w-full">
 								<Button class="w-full" variant="destructive">
-									Remove {#if !task.by_ngo}Help{:else}Event{/if}
+									Remove {#if !task_by_ngo}Help{:else}Event{/if}
 								</Button>
 							</Dialog.Trigger>
 							<Dialog.Content>

@@ -9,12 +9,13 @@
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import SideMenu from '$lib/components/menu.svelte';
 	import { goto } from '$app/navigation';
-
+	
 	export let data;
 	const { user } = data;
 </script>
 
 <SideMenu />
+
 <div class="flex min-h-screen items-center justify-center overflow-hidden">
 	<div class="w-98 m-5 mx-auto space-y-8 p-6 font-mono">
 		<!-- Profile Header -->

@@ -10,12 +10,12 @@
 	export const prerender = false;
 </script>
 
-<div class="bg-background flex min-h-screen items-center justify-center p-6 font-mono">
+<div class="flex min-h-screen items-center justify-center bg-background p-6 font-mono">
 	<div class="w-full max-w-md space-y-10">
 		<!-- Header -->
 		<div class="space-y-2 text-center">
 			<h1 class="text-4xl font-bold tracking-tight">HelpLink</h1>
-			<p class="text-muted-foreground text-sm">
+			<p class="text-sm text-muted-foreground">
 				Install HelpLink on your device for a fast, app-like experience.
 			</p>
 		</div>
@@ -27,11 +27,20 @@
 				<CardDescription>Choose your device or platform below.</CardDescription>
 			</CardHeader>
 
-			<CardContent class="pb-3 space-y-4">
+			<CardContent class="space-y-4 pb-3">
 				<Separator />
 				<!-- ANDROID -->
 				<div class="space-y-3">
-					<h2 class="text-lg font-bold">Android (Chrome)</h2>
+					<div class="flex gap-3">
+						<h2 class="flex text-lg font-bold" style="letter-spacing: -1px">
+							<span style="color: #1970e0; margin-right: 2px">C</span>
+							<span style="color: #d63426; margin-right: 2px">h</span>
+							<span style="color: #f2ba11; margin-right: 2px">r</span>
+							<span style="color: #1970e0; margin-right: 2px">o</span>
+							<span style="color: #299a49; margin-right: 2px">m</span>
+							<span style="color: #d63426; margin-right: 2px">e</span>
+						</h2>
+					</div>
 					<ol class="space-y-3 text-sm">
 						<li class="flex gap-3">
 							<span class="font-medium">1.</span><span
@@ -53,7 +62,9 @@
 
 				<!-- iOS -->
 				<div class="space-y-3">
-					<h2 class="text-lg font-bold">iOS (Safari)</h2>
+					<div class="flex">
+						<h2 class="safari text-lg font-bold">Safari</h2>
+					</div>
 					<ol class="space-y-3 text-sm">
 						<li class="flex gap-3">
 							<span class="font-medium">1.</span><span
@@ -77,7 +88,7 @@
 
 				<!-- Instagram in-app Browser -->
 				<div class="space-y-3">
-					<h2 class="text-lg font-bold">Using Instagram</h2>
+					<h2 class="text-lg font-bold"><span class="insta">Instagram</span></h2>
 					<p class="text-sm">
 						Instagram opens links inside its own browser, which doesn't allow installation. Follow
 						these steps:
@@ -103,7 +114,7 @@
 			</CardContent>
 		</Card>
 
-		<p class="text-muted-foreground text-center text-xs">
+		<p class="text-center text-xs text-muted-foreground">
 			After installation, HelpLink will appear on your home screen just like any other app.
 		</p>
 	</div>

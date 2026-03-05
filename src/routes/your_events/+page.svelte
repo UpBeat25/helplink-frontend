@@ -95,7 +95,7 @@
 </script>
 
 <div class="pl-3 pr-3 pt-8 font-mono">
-	<h1 class="mb-4 text-3xl"><b>Your Events</b></h1>
+	<h1 class="mt-4 ml-2 text-4xl title-font"><b>Your Events.</b></h1>
 	<Separator />
 	<SideMenu />
 

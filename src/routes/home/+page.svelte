@@ -1,8 +1,6 @@
 <script lang="ts">
-	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import Arrow from '@lucide/svelte/icons/arrow-down';
 	import Funnel from '@lucide/svelte/icons/funnel';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
@@ -22,6 +20,8 @@
 	let records = $state<any[]>([]);
 	let volunteeredTaskIds = $state<Set<string>>(new Set());
 
+	let openTaskId = $state<string | null>(null);
+
 	let value = $state(250);
 	let selected = $state('offline');
 	let offer_texts = $state<Record<string, string>>({});
@@ -32,11 +32,6 @@
 	let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 	const user = pb.authStore.record;
-
-	async function logout() {
-		pb.authStore.clear();
-		await goto('/login');
-	}
 
 	function getBoundingBox(lat: number, lng: number, radiusInMeters: number) {
 		const R = 6371;
@@ -115,7 +110,19 @@
 			records = await pb.collection('tasks').getFullList({
 				sort: '-created',
 				filter: filter,
-				expand: 'uploaded_by'
+				expand: 'uploaded_by',
+				fields: `
+					id,
+					title,
+					description,
+					by_ngo,
+					online_only,
+					lat,
+					lng,
+					uploaded_by,
+					expand.uploaded_by.id,
+					expand.uploaded_by.username
+				`
 			});
 		} catch (err: any) {
 			console.error('Error applying filter:', err);
@@ -124,6 +131,11 @@
 	}
 
 	onMount(() => {
+		if (!user) {
+			toast.error('You must be logged in');
+			goto('/login');
+			return;
+		}
 		if (user?.is_ngo) {
 			goto('/your_events');
 		}
@@ -213,9 +225,8 @@
 	}
 </script>
 
-<div class="pl-3 pr-3 pt-8 font-mono">
-	<h1 class="mb-4 text-3xl"><b>HelpLink.</b></h1>
-	<Separator></Separator>
+<div class="pt-8 pr-3 pl-3">
+	<h1 class="title-font mt-4 ml-2 text-4xl"><b>Helplink.</b></h1>
 
 	<SideMenu />
 
@@ -224,7 +235,7 @@
 			<Button
 				size="icon"
 				variant="outline"
-				class="absolute right-16 top-7 rounded-full"
+				class="absolute right-10 bottom-7 rounded-full"
 				aria-label="filter"
 			>
 				<Funnel />
@@ -249,7 +260,13 @@
 						</div>
 						<br />
 						<div class="flex items-center justify-center space-x-2">
-							<span>0</span><Slider type="single" bind:value max={3000} step={10} /><span>3km</span>
+							<span>100</span><Slider
+								type="single"
+								bind:value
+								min={100}
+								max={5000}
+								step={10}
+							/><span>5km</span>
 						</div>
 					</div>
 				{/if}
@@ -264,7 +281,7 @@
 	</Drawer.Root>
 
 	{#if records.length === 0 && latitude !== 0}
-		<div class="text-muted-foreground mt-8 flex items-center justify-center">
+		<div class="mt-8 flex items-center justify-center text-muted-foreground">
 			<p>No tasks found in your area...</p>
 		</div>
 	{/if}
@@ -272,76 +289,68 @@
 	{#each records as record}
 		{#if !volunteeredTaskIds.has(record.id)}
 			{@const user_r = record.expand?.uploaded_by}
-			<div class="mt-4 flex w-full flex-col gap-2 px-4">
-				<Collapsible.Root class="mx-auto w-full max-w-sm space-y-2">
-					<Item.Root variant="outline">
-						{#if !record.by_ngo}
-							<Item.Media
-								onclick={() => {
-									goto(`/profile/${user_r?.username}`);
-								}}
-							>
-								<Avatar.Root class="size-10">
-									<Avatar.Fallback>{user_r?.username?.[0]?.toUpperCase() || 'U'}</Avatar.Fallback>
-								</Avatar.Root>
-							</Item.Media>
-						{/if}
-						<Item.Content>
-							{#if !record.by_ngo}
-								<Item.Title>{record.title}</Item.Title>
-							{:else}
-								<Item.Title><b class="text-yellow-300">Event: </b>{record.title}</Item.Title>
-							{/if}
-							<Item.Description
-								>{distance(latitude, longitude, record.lat, record.lng).toFixed(2)} meters away</Item.Description
-							>
-						</Item.Content>
-						<Item.Actions>
-							<Collapsible.Trigger>
-								<Button size="icon" variant="outline" class="rounded-full" aria-label="expand">
-									<Arrow />
-								</Button>
-							</Collapsible.Trigger>
-						</Item.Actions>
-					</Item.Root>
+			<div class="apple-font mt-4 flex w-full flex-col gap-2 px-4">
+				<Collapsible.Root
+					class="mx-auto w-full max-w-sm space-y-2"
+					open={openTaskId === record.id}
+					onOpenChange={(open) => {
+						openTaskId = open ? record.id : null;
+					}}
+				>
+					<Collapsible.Trigger class="w-full max-w-sm">
+						<Item.Root variant="outline">
+							<Item.Content>
+								<Label
+									style="cursor: pointer;"
+									onclick={() => {
+										goto(`/profile/${user_r?.username}`);
+									}}
+									class="text-xs"
+								>
+									@{user_r?.username || 'Unknown User'}
+									-
+								</Label>
+								<Separator></Separator>
+								<Item.Title class="title-font text-2xl">
+									{#if !record.by_ngo}
+										<b class="text-emerald-400">{record.title}</b>
+									{:else}
+										<b class="text-blue-600 dark:text-blue-400">{record.title}</b>
+									{/if}
+								</Item.Title>
+								<Label class="text-m text-zinc-800 dark:text-stone-200">
+									{record.description}
+								</Label>
+							</Item.Content>
+						</Item.Root>
+					</Collapsible.Trigger>
 					<Collapsible.Content class="space-y-2 rounded-md border px-4 py-3 font-mono">
-						<Label>Description:</Label>
-						<div class="text-muted-foreground text-sm">
-							{record.description}
-						</div>
-						{#if record.by_ngo}
-							<Label
-								style="cursor: pointer; text-decoration:underline"
-								onclick={() => {
-									goto(`/profile/${user_r?.username}`);
-								}}>Hosted By: {user_r?.username || 'Unknown User'}</Label
-							>
-						{:else}
-							<Label
-								style="cursor: pointer; text-decoration:underline"
-								onclick={() => {
-									goto(`/profile/${user_r?.username}`);
-								}}>Uploaded By: {user_r?.username || 'Unknown User'}</Label
-							>
-						{/if}
+						<Label class="text-muted-foreground"
+							>{distance(latitude, longitude, record.lat, record.lng).toFixed(2)} meters away</Label
+						>
 						{#if !record.by_ngo}
-							<Input bind:value={offer_texts[record.id]} placeholder="Your Offer Here..." />
+							<Input
+								bind:value={offer_texts[record.id]}
+								placeholder="Your Offer Here..."
+								class="liquid-glass"
+							/>
 						{/if}
+						<div></div>
 						{#if !offer_texts[record.id] && !record.by_ngo}
-							<Button type="submit" class="w-full" disabled>Help</Button>
+							<Button type="submit" class="liquid-glass w-full" disabled>Help</Button>
 						{:else if processing}
-							<Button disabled class="w-full">
+							<Button disabled class="liquid-glass w-full">
 								<Spinner class="mr-2" />
 								Please Wait...
 							</Button>
 						{:else if record.by_ngo}
 							<Button
-								class="w-full bg-yellow-300"
+								class="liquid-glass w-full bg-blue-600 dark:bg-blue-400"
 								onclick={() => help_user(record.id, 'Attending', true)}>Attend Event!</Button
 							>
 						{:else}
 							<Button
-								class="w-full"
+								class="liquid-glass w-full bg-emerald-400"
 								onclick={() => help_user(record.id, offer_texts[record.id], false)}>Help</Button
 							>
 						{/if}

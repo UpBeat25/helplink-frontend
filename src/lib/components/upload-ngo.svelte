@@ -210,7 +210,7 @@
 						<div class="p-4 pb-0">
 							{#if latitude !== null && longitude !== null}
 								<!-- ✅ Bind element reference for map -->
-								<div bind:this={mapContainer} class="h-64 w-full rounded-lg border"></div>
+								<div bind:this={mapContainer} class="h-64 w-full rounded-lg border z-[7]"></div>
 								<div class="text-muted-foreground mt-2 flex space-x-4 text-sm">
 									<div>Lat: {latitude.toFixed(6)}</div>
 									<div>Lng: {longitude.toFixed(6)}</div>

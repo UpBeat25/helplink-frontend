@@ -6,7 +6,12 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(92.437% 0.00884 264.606 / 0.509);
+  /*
+  --background: oklch(89.204% 0.16182 105.416 / 0.817);
+  oklch(50.424% 0.27442 265.646 / 0.315)
+  oklch(100% 0.00011 271.152 / 0.817)
+  */
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
@@ -40,7 +45,16 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: oklch(0% 0 0 / 0.662); 
+  /*
+  oklch(38.699% 0.09163 22.279)
+  oklch(48.996% 0.07202 95.287)
+  oklch(47.883% 0.10709 146.812)
+  oklch(48.916% 0.069 177.903)
+  oklch(42.838% 0.06084 238.55)
+  oklch(35.443% 0.10685 293.945)
+  oklch(39.739% 0.09956 350.422)
+  */
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
@@ -128,4 +142,34 @@
   max-height: none !important;
   width: auto !important;
   height: auto !important;
+}
+
+.liquid-glass {
+  
+  border: 0.5px solid black;
+}
+
+.menu_font {
+  font-size: 20px;
+  font-family: monospace;
+}
+.title-font {
+  font-family: monospace;
+  font-weight: 300;
+}
+
+.invert-color {
+  filter: invert(1);
+}
+
+.insta {
+  background: linear-gradient(245DEG, #5c74ec,#5851DB, #833AB4, #C13584, #E1306C, #fd1d1d, #f8c95f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.safari {
+  background: linear-gradient(245DEG, #64c1f5, #64c1f5,#ffffff, #fc0c03, #ffffff, #64c1f5, #64c1f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

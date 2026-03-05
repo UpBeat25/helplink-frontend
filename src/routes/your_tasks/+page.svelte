@@ -16,17 +16,16 @@
   import SideMenu from "$lib/components/menu.svelte";
 
   let ratings = $state<any>({});
-
   let { records } = $props();
 
   const user = pb.authStore.record;
 
   onMount(async () => {
     const user = pb.authStore.record;
-    
+
     if (!user) {
       toast.error("You must be logged in");
-      goto("/login"); // ✅ safe: only runs on client
+      goto("/login");
       return;
     }
 
@@ -41,7 +40,7 @@
       sort: "-created"
     });
 
-    const newRatings: any = {}; // Build new ratings object
+    const newRatings: any = {};
 
     for (let task of tasks) {
       const statusList = await pb.collection("status").getFullList({
@@ -51,18 +50,29 @@
 
       task.status_list = statusList;
 
+      // Default ratings
       for (let status of statusList) {
-        newRatings[status.id] = 5; // Default rating of 5
+        newRatings[status.id] = 5;
       }
 
-      // NEW — all volunteers must be accepted
-      task.allAccepted = statusList.length > 0 && statusList.every(s => s.status === "accepted");
+      // 🔴 DELETE LOGIC
+      // Block delete if ANY accepted or completed volunteer exists
+      task.hasActiveVolunteer = statusList.some(
+        s => s.status === "accepted" || s.status === "completed"
+      );
 
-      // NEW — all volunteers must be completed
-      task.allCompleted = statusList.length > 0 && statusList.every(s => s.status === "completed");
+      // 🟢 COMPLETION LOGIC
+      // Only consider accepted + completed volunteers
+      const acceptedVolunteers = statusList.filter(
+        s => s.status === "accepted" || s.status === "completed"
+      );
+
+      task.canMarkComplete =
+        acceptedVolunteers.length > 0 &&
+        acceptedVolunteers.every(s => s.status === "completed");
     }
 
-    ratings = newRatings; // Reassign for reactivity
+    ratings = newRatings;
     records = tasks;
   }
 
@@ -81,33 +91,34 @@
       await delete_all_status_for_task(taskId);
       await pb.collection("tasks").delete(taskId);
       toast.success(`Task Deleted`);
-      get_your_tasks(user); // refresh
+      await get_your_tasks(user);
     } catch (e) {
       toast.error("Error deleting task");
     }
   }
-  
+
   async function mark_completed(taskId: string) {
     try {
       await delete_all_status_for_task(taskId);
       await pb.collection("tasks").delete(taskId);
       toast.success(`Task Completed`);
-      get_your_tasks(user); // refresh
+      await get_your_tasks(user);
+      window.location.reload();
     } catch (e) {
-      toast.error("Error deleting task");
+      toast.error("Error completing task");
     }
   }
 
   async function submitKarma(record: any) {
     try {
       for (let status of record.status_list) {
+        if (status.status !== "completed") continue;
+
         const userId = status.expand.user.id;
         const karmaToAdd = ratings[status.id];
 
-        // Fetch current user to get their existing karma
         const volunteer = await pb.collection("users").getOne(userId);
 
-        // Increment the user's karma
         await pb.collection("users").update(userId, {
           karma: volunteer.karma + karmaToAdd
         });
@@ -121,7 +132,6 @@
     }
   }
 
-
   async function update_status(status_id: string, new_status: "accepted" | "rejected") {
     try {
       await pb.collection("status").update(status_id, {
@@ -129,18 +139,16 @@
       });
 
       toast.success(`Volunteer ${new_status}`);
-      // Refresh UI
       await get_your_tasks(user);
     } catch (err) {
       console.error(err);
       toast.error("Unable to update status");
     }
   }
-
 </script>
 
 <div class="pr-3 pt-8 pl-3 font-mono">
-  <h1 class="text-3xl mb-4"><b>Your Tasks</b></h1>
+  <h1 class="mt-4 ml-2 text-4xl title-font"><b>Your Tasks.</b></h1>
   <Separator />
   <SideMenu />
 
@@ -161,16 +169,17 @@
           </Item.Content>
 
           <!-- Show Delete Task only if no volunteers OR none accepted -->
-          {#if !record.allAccepted && !record.allCompleted}
+          {#if !record.hasActiveVolunteer}
             <Button variant="destructive" onclick={() => delete_task(record.id)}>
               Delete Task
             </Button>
           {:else}
             <!-- Show Mark as Complete only if all are accepted -->
             <Dialog.Root>
-              <Dialog.Trigger><Button disabled={!record.allCompleted}>
+            <Button disabled={!record.canMarkComplete}>
+              <Dialog.Trigger>
                 Mark as Complete
-              </Button></Dialog.Trigger>
+              </Dialog.Trigger></Button>
               <Dialog.Content>
                 <Dialog.Header>
                   <Dialog.Title>Rate Volunteers</Dialog.Title>

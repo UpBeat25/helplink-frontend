@@ -1,33 +1,55 @@
 <script lang="ts">
-	import { Button } from "$lib/components/ui/button";
-	import * as Card from "$lib/components/ui/card";
-	import * as Field from "$lib/components/ui/field";
-	import { Input } from "$lib/components/ui/input";
-	import { pb } from "$lib/pocketbase";
-	import { toast } from "svelte-sonner";
-	import { Spinner } from "$lib/components/ui/spinner/index.js";
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { pb } from '$lib/pocketbase';
+	import { toast } from 'svelte-sonner';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import Eye from "@lucide/svelte/icons/eye";
+	import EyeClose from "@lucide/svelte/icons/eye-closed";
 
-	let email = $state("");
-	let password = $state("");
-	let status = $state("");
+	let email = $state('');
+	let password = $state('');
+	let status = $state('');
 	let processing = $state(false);
+	let showPassword = $state(false);
+
+	function toggleVisibility() {
+		showPassword = !showPassword;
+	}
 
 	async function login() {
 		try {
 			processing = true;
-			status = "";
+			status = '';
 
-			await pb.collection("users").authWithPassword(email.toLowerCase(), password);
+			await pb.collection('users').authWithPassword(email.toLowerCase(), password);
 			document.cookie = pb.authStore.exportToCookie();
-			toast.success("Logged in successfully!");
+			toast.success('Logged in successfully!');
 			const params = new URLSearchParams(window.location.search);
-			const redirectTo = params.get("redirectTo") || "/home";
+			const redirectTo = params.get('redirectTo') || '/home';
 			window.location.href = redirectTo;
 		} catch (err: any) {
-			status = err?.message || "Login failed. Check your credentials.";
+			status = err?.message || 'Login failed. Check your credentials.';
 			toast.error(status);
 		} finally {
 			processing = false;
+		}
+	}
+	async function password_reset(email: string) {
+		try {
+			// Basic validation
+			if (typeof email !== 'string' || !email.includes('@')) {
+				throw new Error('Invalid email address.');
+			}
+
+			// Send password reset request
+			await pb.collection('users').requestPasswordReset(email);
+
+			console.log(`Password reset email sent to: ${email}`);
+		} catch (error) {
+			console.error('Password reset failed');
 		}
 	}
 </script>
@@ -43,23 +65,24 @@
 			<Field.Group>
 				<Field.Field>
 					<Field.Label for="email">Email</Field.Label>
-					<Input
-						id="email"
-						type="email"
-						bind:value={email}
-						placeholder="m@example.com"
-						required
-					/>
+					<Input id="email" type="email" bind:value={email} placeholder="m@example.com" required />
 				</Field.Field>
 
 				<Field.Field>
 					<Field.Label for="password">Password</Field.Label>
-					<Input
-						id="password"
-						type="password"
-						bind:value={password}
-						required
-					/>
+					<div class="flex w-full max-w-sm items-center gap-2">
+						<Input type={showPassword ? "text" : "password"} id="password" bind:value={password} required />
+						<Button type="button" variant="outline" size="icon" onclick={toggleVisibility} aria-label={showPassword ? "Hide password" : "Show password"}>
+						{#if showPassword}
+							<EyeClose class="h-4 w-4" />
+						{:else}
+							<Eye class="h-4 w-4" />
+						{/if}
+						</Button>
+					</div>
+					<Button variant="link" class="w-1 overflow-hidden" onclick={() => password_reset(email)}
+						>Forgot Password?</Button
+					>
 				</Field.Field>
 
 				<Field.Field>
@@ -72,8 +95,8 @@
 						<Button type="submit" class="w-full">Login</Button>
 					{/if}
 
-					<Field.Description class="text-center mt-3">
-						Don’t have an account? <a href="/signup">Sign up!</a><br>
+					<Field.Description class="mt-3 text-center">
+						Don’t have an account? <a href="/signup">Sign up!</a><br />
 						Are you a NGO? <a href="mailto:helplink2048@gmail.com">Contact Us!</a>
 					</Field.Description>
 				</Field.Field>
@@ -81,7 +104,7 @@
 		</form>
 
 		{#if status}
-			<p class="text-sm text-red-500 mt-2 text-center">{status}</p>
+			<p class="mt-2 text-center text-sm text-red-500">{status}</p>
 		{/if}
 	</Card.Content>
 </Card.Root>

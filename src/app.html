@@ -6,6 +6,20 @@
 		%sveltekit.head%
 		<link rel="manifest" href="%sveltekit.assets%/manifest.json">
 		<title>Helplink: Lend a Hand</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+
+		<style>
+			h1 {
+				font-family: sans-serif;
+				
+			}
+			html, body {
+				overscroll-behavior-y: bottom;
+				overscroll-behavior-x: none;
+			}
+		</style>
 	</head>
 	<body data-sveltekit-preload-data="none">
 		<div style="display: contents">%sveltekit.body%</div>
