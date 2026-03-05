@@ -6,7 +6,7 @@
 </script>
 <Toaster />
 <svelte:head>
-	<link rel="icon" href="/image1.png" />
+	<link rel="icon" href="/HelpLink_fav.png" />
 </svelte:head>
 
 <ModeWatcher />
