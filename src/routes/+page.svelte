@@ -15,13 +15,13 @@
 		<!-- Header -->
 		<div class="space-y-2 text-center">
 			<h1 class="text-4xl font-bold tracking-tight">HelpLink</h1>
-			<p class="text-sm text-muted-foreground">
+			<p class="text-m">
 				Install HelpLink on your device for a fast, app-like experience.
 			</p>
 		</div>
 
 		<!-- Main Card -->
-		<Card class="rounded-3xl p-2 shadow-lg">
+		<Card class="items-home p-2 shadow-lg">
 			<CardHeader class="mt-3">
 				<CardTitle class="text-xl font-semibold">How to Install</CardTitle>
 				<CardDescription>Choose your device or platform below.</CardDescription>

@@ -170,7 +170,7 @@
 }
 
 .safari {
-  background: linear-gradient(245DEG, #64c1f5, #64c1f5,#ffffff, #fc0c03, #ffffff, #64c1f5, #64c1f5);
+  background: linear-gradient(245DEG, #64c1f5, #64c1f5,#000000, #fc0c03, #000000, #64c1f5, #64c1f5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
