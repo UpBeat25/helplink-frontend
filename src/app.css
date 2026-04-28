@@ -6,8 +6,9 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(92.437% 0.00884 264.606 / 0.509);
+  --background: #fdc42d;
   /*
+  oklch(92.437% 0.00884 264.606 / 0.509);
   --background: oklch(89.204% 0.16182 105.416 / 0.817);
   oklch(50.424% 0.27442 265.646 / 0.315)
   oklch(100% 0.00011 271.152 / 0.817)
@@ -45,7 +46,7 @@
 }
 
 .dark {
-  --background: oklch(0% 0 0 / 0.662); 
+  --background: oklch(0% 0 0); 
   /*
   oklch(38.699% 0.09163 22.279)
   oklch(48.996% 0.07202 95.287)
@@ -145,8 +146,8 @@
 }
 
 .liquid-glass {
-  
   border: 0.5px solid black;
+  background-color: whitesmoke;
 }
 
 .menu_font {
@@ -172,4 +173,22 @@
   background: linear-gradient(245DEG, #64c1f5, #64c1f5,#ffffff, #fc0c03, #ffffff, #64c1f5, #64c1f5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.items-home {
+  background-color: #ffffff;
+  border: 3px solid rgb(0, 0, 0);
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+  text-align:justify;
+  border-radius: 20px;
+  color:black;
+}
+
+.outline-bu {
+  background-color: #ffffff;
+  border: 3px solid rgb(0, 0, 0);
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+}
+.outline-m {
+  background-color: #ffffffd8;
 }

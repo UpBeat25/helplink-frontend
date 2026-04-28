@@ -7,7 +7,7 @@
 			variant: {
 				default:
 					'bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-input dark:hover:bg-input/50 border ',
-				outline: 'border-border',
+				outline: 'border-border items-home items-start',
 				muted: 'bg-muted/50'
 			},
 			size: {

@@ -71,10 +71,9 @@
 			const pos = latitude && longitude ? { lat: latitude, lng: longitude } : await getLocation();
 			map = L.map(mapContainer).setView([pos.lat, pos.lng], 13);
 
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution:
-					'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			}).addTo(map);
+			L.tileLayer(
+				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+			).addTo(map);
 
 			marker = L.marker([pos.lat, pos.lng]).addTo(map);
 
@@ -164,7 +163,7 @@
 </script>
 
 <SideMenu />
-<Card.Root class="mx-auto w-full max-w-sm">
+<Card.Root class="mx-auto w-full max-w-sm bg-neutral-50 pt-8 text-black">
 	<Card.Header>
 		<Card.Title class="text-2xl">Create an event</Card.Title>
 		<Card.Description>Please enter the details and nature of the event below</Card.Description>
@@ -180,6 +179,7 @@
 						bind:value={title}
 						type="text"
 						placeholder="Title Here..."
+						class="bg-neutral-50"
 						required
 					/>
 				</Field>
@@ -196,11 +196,13 @@
 
 				<Field>
 					<FieldLabel for={'private-' + id}>Create Passcode</FieldLabel>
-					<Textarea
+					<Input
 						id={'private-' + id}
 						bind:value={private_n}
 						placeholder="Create passcode for event"
 						required
+						class="bg-neutral-50"
+						type="number"
 					/>
 				</Field>
 
@@ -210,15 +212,15 @@
 						<div class="p-4 pb-0">
 							{#if latitude !== null && longitude !== null}
 								<!-- ✅ Bind element reference for map -->
-								<div bind:this={mapContainer} class="h-64 w-full rounded-lg border z-[7]"></div>
-								<div class="text-muted-foreground mt-2 flex space-x-4 text-sm">
+								<div bind:this={mapContainer} class="z-[7] h-64 w-full rounded-lg border"></div>
+								<div class="mt-2 flex space-x-4 text-sm text-muted-foreground">
 									<div>Lat: {latitude.toFixed(6)}</div>
 									<div>Lng: {longitude.toFixed(6)}</div>
 								</div>
 							{:else if error}
 								<p class="p-2 text-sm text-red-500">{error}</p>
 							{:else}
-								<p class="text-muted-foreground p-2 text-sm">Getting your location...</p>
+								<p class="p-2 text-sm text-muted-foreground">Getting your location...</p>
 							{/if}
 						</div>
 						<div class="flex items-center gap-3">
@@ -242,4 +244,5 @@
 		</form>
 		<p id="status" class="mt-2 text-center text-sm text-red-500"></p>
 	</Card.Content>
+	<br />
 </Card.Root>

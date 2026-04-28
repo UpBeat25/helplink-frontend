@@ -165,7 +165,7 @@
 </script>
 
 <SideMenu />
-<Card.Root class="mx-auto w-full max-w-sm pt-8">
+<Card.Root class="mx-auto w-full max-w-sm pt-8 bg-neutral-50 text-black">
 	<Card.Header>
 		<Card.Title class="text-2xl">Ask For a Hand</Card.Title>
 		<Card.Description>Please enter the details and nature of the task below</Card.Description>
@@ -181,6 +181,7 @@
 						bind:value={title}
 						type="text"
 						placeholder="Title Here..."
+						class="bg-neutral-50"
 						required
 					/>
 				</Field>

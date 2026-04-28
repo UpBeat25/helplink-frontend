@@ -15,6 +15,7 @@
 	import { toast } from 'svelte-sonner';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { Badge } from '$lib/components/ui/badge';
 
 	// Changed from props to local state
 	let records = $state<any[]>([]);
@@ -82,7 +83,6 @@
 
 	async function applyFilter() {
 		if (!user) {
-			toast.error('You must be logged in');
 			goto('/login');
 			return;
 		}
@@ -126,11 +126,10 @@
 			});
 		} catch (err: any) {
 			console.error('Error applying filter:', err);
-			toast.error('Failed to load tasks');
 		}
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		if (!user) {
 			toast.error('You must be logged in');
 			goto('/login');
@@ -176,7 +175,6 @@
 
 	async function help_user(id: string, offer: string, by_ngo: boolean) {
 		if (!user) {
-			toast.error('You must be logged in');
 			goto('/login');
 			return;
 		}
@@ -234,7 +232,7 @@
 		<Drawer.Trigger>
 			<Button
 				size="icon"
-				variant="outline"
+				variant="outline_bu"
 				class="absolute right-10 bottom-7 rounded-full"
 				aria-label="filter"
 			>
@@ -300,31 +298,42 @@
 					<Collapsible.Trigger class="w-full max-w-sm">
 						<Item.Root variant="outline">
 							<Item.Content>
-								<Label
-									style="cursor: pointer;"
-									onclick={() => {
-										goto(`/profile/${user_r?.username}`);
-									}}
-									class="text-xs"
-								>
-									@{user_r?.username || 'Unknown User'}
-									-
-								</Label>
+								<div class="flex w-full gap-2">
+									<Label
+										style="cursor: pointer;"
+										onclick={() => {
+											goto(`/profile/${user_r?.username}`);
+										}}
+										class="text-xs"
+									>
+										@{user_r?.username || 'Unknown User'}
+										-
+									</Label>
+									{#if !record.by_ngo}
+										<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
+									{:else}
+										<Badge variant="secondary" class="mt-1 bg-blue-600 text-white dark:bg-blue-400">
+											Event
+										</Badge>
+									{/if}
+								</div>
 								<Separator></Separator>
 								<Item.Title class="title-font text-2xl">
+									<!--
 									{#if !record.by_ngo}
 										<b class="text-emerald-400">{record.title}</b>
 									{:else}
 										<b class="text-blue-600 dark:text-blue-400">{record.title}</b>
-									{/if}
+									{/if}-->
+									<b>{record.title}</b>
 								</Item.Title>
-								<Label class="text-m text-zinc-800 dark:text-stone-200">
+								<Label class="text-m text-zinc-800 dark:text-stone-800">
 									{record.description}
 								</Label>
 							</Item.Content>
 						</Item.Root>
 					</Collapsible.Trigger>
-					<Collapsible.Content class="space-y-2 rounded-md border px-4 py-3 font-mono">
+					<Collapsible.Content class="items-home space-y-2 rounded-md border px-4 py-3 font-mono">
 						<Label class="text-muted-foreground"
 							>{distance(latitude, longitude, record.lat, record.lng).toFixed(2)} meters away</Label
 						>
@@ -337,20 +346,20 @@
 						{/if}
 						<div></div>
 						{#if !offer_texts[record.id] && !record.by_ngo}
-							<Button type="submit" class="liquid-glass w-full" disabled>Help</Button>
+							<Button type="submit" class="w-full" disabled>Help</Button>
 						{:else if processing}
-							<Button disabled class="liquid-glass w-full">
+							<Button disabled class="w-full">
 								<Spinner class="mr-2" />
 								Please Wait...
 							</Button>
 						{:else if record.by_ngo}
 							<Button
-								class="liquid-glass w-full bg-blue-600 dark:bg-blue-400"
+								class="w-full bg-blue-600 dark:bg-blue-400"
 								onclick={() => help_user(record.id, 'Attending', true)}>Attend Event!</Button
 							>
 						{:else}
 							<Button
-								class="liquid-glass w-full bg-emerald-400"
+								class="w-full bg-background text-black"
 								onclick={() => help_user(record.id, offer_texts[record.id], false)}>Help</Button
 							>
 						{/if}

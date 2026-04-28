@@ -21,7 +21,7 @@
 
   <!-- Value Box -->
   <div class="w-12 h-9 flex items-center justify-center 
-              border text-lg font-semibold">
+              border text-lg font-semibold items-home">
     {value}
   </div>
 

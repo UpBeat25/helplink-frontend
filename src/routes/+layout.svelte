@@ -4,10 +4,10 @@
 	let { children } = $props();
 	import { Toaster } from "$lib/components/ui/sonner/index.js";
 </script>
-<Toaster />
+<Toaster position="top-center" />
 <svelte:head>
 	<link rel="icon" href="/HelpLink_fav.png" />
 </svelte:head>
 
-<ModeWatcher />
+<ModeWatcher defaultMode="light" disableTransitions />
 {@render children?.()}

@@ -13,11 +13,6 @@
 
 	let open = false;
 
-	async function logout() {
-		pb.authStore.clear();
-		await goto('/login');
-	}
-
 	function navigate(path: string) {
 		if ($page.url.pathname === path) {
 			// Same page → just close menu
@@ -34,8 +29,8 @@
 	<Sheet.Trigger>
 		<Button
 			size="icon"
-			variant="outline"
-			class="fixed bottom-7 left-1/2 z-[8] w-50 -translate-x-1/2 rounded-full"
+			variant="outline_bu"
+			class="fixed bottom-7 left-1/2 z-[8] w-50 -translate-x-1/2 rounded-full text-black"
 			aria-label="menu"
 		>
 			<Menu />
@@ -101,6 +96,7 @@
 				}}>Your Profile</Button
 			>
 
+			<!--
 			<Button onclick={toggleMode} variant="outline">
 				<SunIcon
 					class="h-[3rem] w-[3rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
@@ -109,10 +105,7 @@
 					class="absolute h-[3rem] w-[3rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
 				/>
 				<span class="sr-only">Toggle theme</span>
-			</Button>
-			<Button variant="ghost_logout" type="button" onclick={logout}
-				><span style="color: red">Logout</span></Button
-			>
+			</Button>-->
 		</Sheet.Footer>
 		<br />
 	</Sheet.Content>

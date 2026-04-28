@@ -14,6 +14,7 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { onMount } from 'svelte';
+	import { Badge } from '$lib/components/ui/badge';
 
 	let { records } = $props();
 
@@ -179,23 +180,29 @@
 				<Collapsible.Trigger class="w-full max-w-sm">
 					<Item.Root variant="outline">
 						<Item.Content>
-							<Label
-								style="cursor: pointer;"
-								onclick={() => {
-									goto(`/profile/${owner?.username}`);
-								}}
-								class="text-xs"
-							>
-								@{owner?.username || 'Unknown User'}
-								-
-							</Label>
-							{#if !task_by_ngo}
-								<Item.Title class="text-base"
-									><b class="text-emerald-400">Task: </b>{task_title}</Item.Title
+							<div class="flex w-full gap-2">
+								<Label
+									style="cursor: pointer;"
+									onclick={() => {
+										goto(`/profile/${owner?.username}`);
+									}}
+									class="text-xs"
 								>
-								<br />
+									@{owner?.username || 'Unknown User'}
+									-
+								</Label>
+								{#if !task_by_ngo}
+									<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
+								{:else}
+									<Badge variant="secondary" class="mt-1 bg-blue-600 text-white dark:bg-blue-400">
+										Event
+									</Badge>
+								{/if}
+							</div>
+							<Item.Title class="text-base">{task_title}</Item.Title>
+							{#if !task_by_ngo}
 								<Item.Description
-									><b class="text-zinc-300">Status:</b>
+									><b class="text-black">Status:</b>
 									{#if record.status == 'accepted'}
 										<span class="text-emerald-400">accepted</span>
 									{:else if record.status == 'pending'}
@@ -206,43 +213,14 @@
 										<span>completed</span>
 									{/if}
 								</Item.Description>
-							{:else}
-								<Item.Title class="text-base"
-									><b class="text-blue-600 dark:text-blue-300">Event: </b>{task_title}</Item.Title
-								>
 							{/if}
 						</Item.Content>
-						{#if record.status == 'accepted' && !task_by_ngo}
-							<Dialog.Root>
-								<Dialog.Trigger class="w-full">
-									<Button class="w-full bg-emerald-400">Mark as Complete</Button>
-								</Dialog.Trigger>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>Rate Task Owner</Dialog.Title>
-										<Dialog.Description>
-											Give karma (1–10) to {owner?.username}
-										</Dialog.Description>
-									</Dialog.Header>
-
-									<div class="rounded-xl border p-4">
-										<KarmaCounter bind:value={ratings[owner.id]} />
-									</div>
-
-									<Dialog.Footer class="mt-4">
-										<Dialog.Close>
-											<Button onclick={() => mark_completed(task_id, owner?.id)}>
-												Submit Rating
-											</Button>
-										</Dialog.Close>
-									</Dialog.Footer>
-								</Dialog.Content>
-							</Dialog.Root>
-						{/if}
 					</Item.Root>
 				</Collapsible.Trigger>
 
-				<Collapsible.Content class="w-full space-y-2 rounded-md border px-4 py-3 font-mono">
+				<Collapsible.Content
+					class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+				>
 					<Label>Description:</Label>
 					<div class="text-sm text-muted-foreground">
 						{task_description}
@@ -269,12 +247,39 @@
 								Location
 							</Button>
 						{/if}
+						{#if !task_by_ngo}
+							<Dialog.Root>
+								<Dialog.Trigger class="w-full">
+									<Button class="w-full bg-emerald-400">Mark as Complete</Button>
+								</Dialog.Trigger>
+								<Dialog.Content>
+									<Dialog.Header>
+										<Dialog.Title>Rate Task Owner</Dialog.Title>
+										<Dialog.Description>
+											Give karma (1–10) to {owner?.username}
+										</Dialog.Description>
+									</Dialog.Header>
+
+									<div class="flex w-full items-center justify-center rounded-xl border p-4">
+										<KarmaCounter bind:value={ratings[owner.id]} />
+									</div>
+
+									<Dialog.Footer class="mt-4">
+										<Dialog.Close>
+											<Button onclick={() => mark_completed(task_id, owner?.id)}>
+												Submit Rating
+											</Button>
+										</Dialog.Close>
+									</Dialog.Footer>
+								</Dialog.Content>
+							</Dialog.Root>
+						{/if}
 
 						{#if task_by_ngo}
 							{@const priv = privateNotes[task_id]}
 							<Dialog.Root>
 								<Dialog.Trigger class="w-full">
-									<Button class="w-full bg-blue-600 dark:bg-blue-300">Mark as Complete</Button>
+									<Button class="w-full bg-blue-600 dark:bg-blue-400">Mark as Complete</Button>
 								</Dialog.Trigger>
 								<Dialog.Content>
 									<Dialog.Header>
@@ -284,16 +289,16 @@
 										</Dialog.Description>
 									</Dialog.Header>
 
-									<div class="rounded-xl border p-4">
-										<KarmaCounter bind:value={ratings[owner?.id]} />
+									<div class="flex w-full items-center justify-center rounded-xl p-4">
+										<KarmaCounter bind:value={ratings[owner.id]} />
 									</div>
 
-									<Input bind:value={passcode} placeholder="Enter Event Passcode..." />
+									<Input class="items-home" bind:value={passcode} placeholder="Enter Event Passcode..." />
 
 									<Dialog.Footer class="mt-4">
 										<Dialog.Close>
 											<Button onclick={() => mark_completed_ngo(task_id, priv, owner?.id)}>
-												Submit Rating
+												Submit
 											</Button>
 										</Dialog.Close>
 									</Dialog.Footer>
@@ -330,6 +335,7 @@
 						</Dialog.Root>
 					{/if}
 				</Collapsible.Content>
+				<span></span>
 			</Collapsible.Root>
 		</div>
 	{/each}

@@ -16,6 +16,8 @@
 
 	const user = pb.authStore.record;
 
+	let openTaskId = $state<string | null>(null);
+
 	onMount(async () => {
 		const user = pb.authStore.record;
 
@@ -94,74 +96,83 @@
 	}
 </script>
 
-<div class="pl-3 pr-3 pt-8 font-mono">
-	<h1 class="mt-4 ml-2 text-4xl title-font"><b>Your Events.</b></h1>
-	<Separator />
+<div class="pt-8 pr-3 pl-3 font-mono">
+	<h1 class="title-font mt-4 ml-2 text-4xl"><b>Your Events.</b></h1>
 	<SideMenu />
 
 	{#if !records || records.length === 0}
-		<div class="text-muted-foreground mt-8 flex items-center justify-center">
+		<div class="mt-8 flex items-center justify-center text-muted-foreground">
 			<p>No active events uploaded by you...</p>
 		</div>
 	{/if}
 
 	{#each records as record}
 		<div class="flex w-full flex-col gap-2 px-4">
-			<Collapsible.Root class="mx-auto w-full max-w-sm space-y-2">
+			<Collapsible.Root
+				class="mx-auto w-full max-w-sm space-y-2"
+				open={openTaskId === record.id}
+				onOpenChange={(open) => {
+					openTaskId = open ? record.id : null;
+				}}
+			>
 				<Item.Root variant="outline">
 					<Item.Content>
 						<Item.Title>{record.title}</Item.Title>
 					</Item.Content>
 
-					{#if !record.allAccepted && !record.allCompleted}
-						<Button variant="destructive" onclick={() => delete_task(record.id)}>
-							Delete Event
-						</Button>
-					{:else}
-						<!-- Show Mark as Complete only if all are accepted -->
-						<Dialog.Root>
-							<Dialog.Trigger><Button>Mark as Complete</Button></Dialog.Trigger>
+					<div class="flex w-full gap-2">
+						<Item.Actions>
+							<Collapsible.Trigger>
+								<Button size="icon" variant="outline" class="rounded-full">
+									<Arrow />
+								</Button>
+							</Collapsible.Trigger>
+						</Item.Actions>
 
-							<Dialog.Content class="sm:max-w-[425px]">
-								<Dialog.Header>
-									<Dialog.Title>Make the Day More Memorable?</Dialog.Title>
-									<Dialog.Description>
-										This is completely optional but we would appreciate if you shared a selfie of
-										you and the others to remember this day. Kindly attach the selfie with the
-										instagram usernames of the the people so that they can be tagged.
-									</Dialog.Description>
-								</Dialog.Header>
-								<div class="grid gap-4 py-4">
-									<div class="grid grid-cols-4 items-center gap-4">
-										<a href="mailto:helplink2048@gmail.com" class="w-full">
-											<Button>Email</Button>
-										</a>
-									</div>
-								</div>
-								<Dialog.Footer>
-									<Button
-										type="submit"
-										onclick={() => {
-											mark_completed(record.id);
-										}}>Thank you!</Button
-									>
-								</Dialog.Footer>
-							</Dialog.Content>
-						</Dialog.Root>
-					{/if}
-
-					<Item.Actions>
-						<Collapsible.Trigger>
-							<Button size="icon" variant="outline" class="rounded-full">
-								<Arrow />
+						{#if !record.allAccepted && !record.allCompleted}
+							<Button variant="destructive" onclick={() => delete_task(record.id)}>
+								Delete Event
 							</Button>
-						</Collapsible.Trigger>
-					</Item.Actions>
+						{:else}
+							<!-- Show Mark as Complete only if all are accepted -->
+							<Dialog.Root>
+								<Dialog.Trigger><Button>Mark as Complete</Button></Dialog.Trigger>
+
+								<Dialog.Content class="sm:max-w-[425px]">
+									<Dialog.Header>
+										<Dialog.Title>Make the Day More Memorable?</Dialog.Title>
+										<Dialog.Description>
+											This is completely optional but we would appreciate if you shared a selfie of
+											you and the others to remember this day. Kindly attach the selfie with the
+											instagram usernames of the the people so that they can be tagged.
+										</Dialog.Description>
+									</Dialog.Header>
+									<div class="grid gap-4 py-4">
+										<div class="items-center gap-4">
+											<a href="https://ig.me/m/helplink.dev" class="w-full">
+												<Button class="w-full bg-background text-black">Message Us!</Button>
+											</a>
+										</div>
+									</div>
+									<Dialog.Footer>
+										<Button
+											type="submit"
+											onclick={() => {
+												mark_completed(record.id);
+											}}>Thank you!</Button
+										>
+									</Dialog.Footer>
+								</Dialog.Content>
+							</Dialog.Root>
+						{/if}
+					</div>
 				</Item.Root>
 
-				<Collapsible.Content class="w-full space-y-2 rounded-md border px-4 py-3 font-mono">
+				<Collapsible.Content
+					class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+				>
 					<Label>Description:</Label>
-					<div class="text-muted-foreground text-sm">
+					<div class="text-sm text-muted-foreground">
 						{record.description}
 					</div>
 
@@ -177,7 +188,7 @@
 												>{status.expand.user.username}</a
 											>
 											– {#if status.status === 'accepted'}
-												Attendfing
+												Attending
 											{:else}
 												{status.status}
 											{/if}
