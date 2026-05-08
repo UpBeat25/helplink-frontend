@@ -37,7 +37,11 @@
 				<p class="text-sm">@{user.username}</p>
 			</div>
 			<div>
-				<Label><b>Date of Birth</b></Label>
+				<Label
+					><b
+						>{#if !user.is_ngo}Date of Birth{:else}Date of Joining{/if}</b
+					></Label
+				>
 				<p class="text-sm">
 					{new Intl.DateTimeFormat('en-US', {
 						day: 'numeric',

@@ -192,3 +192,22 @@
 .outline-m {
   background-color: #ffffffd8;
 }
+
+.questions {
+  border: solid 3px #000000;
+}
+
+.underline {
+  border-bottom: 2px dotted #000;
+  text-decoration: none;
+}
+
+.back {
+    background-image: radial-gradient(
+        rgba(0, 0, 0, 0.372) 1px, 
+        transparent 1px
+      );
+    background-position: 50% 50%;
+    background-size: 1.1rem 1.1rem;
+    z-index: 10;
+}
