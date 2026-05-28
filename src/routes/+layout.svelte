@@ -3,6 +3,11 @@
 	import { ModeWatcher } from "mode-watcher";
 	let { children } = $props();
 	import { Toaster } from "$lib/components/ui/sonner/index.js";
+	import { onMount } from "svelte";
+
+	onMount(() => {
+		localStorage.removeItem("mode-watcher-mode");
+	});
 </script>
 <Toaster position="top-center" />
 <svelte:head>
