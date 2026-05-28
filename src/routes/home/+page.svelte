@@ -236,7 +236,7 @@
 				class="absolute right-10 bottom-7 rounded-full"
 				aria-label="filter"
 			>
-				<Funnel />
+				<Funnel class="text-black" />
 			</Button>
 		</Drawer.Trigger>
 		<Drawer.Content>

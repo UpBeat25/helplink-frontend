@@ -58,7 +58,7 @@
 			have created a seperate page to show their journey with us!
 		</p>
 	</div>
-	<div class="grid grid-cols-3 gap-4">
+	<div class="grid grid-cols-1 gap-4">
 		{#each ngos as ngo}
 			<Card class="items-home p-2 shadow-lg" onclick={() => navigate(`/profile/${ngo.username}`)}>
 				<CardHeader class="mt-3">

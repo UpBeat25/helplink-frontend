@@ -5,14 +5,11 @@
 	import { Toaster } from "$lib/components/ui/sonner/index.js";
 	import { onMount } from "svelte";
 
-	onMount(() => {
-		localStorage.removeItem("mode-watcher-mode");
-	});
 </script>
 <Toaster position="top-center" />
 <svelte:head>
 	<link rel="icon" href="/HelpLink_fav.png" />
 </svelte:head>
 
-<ModeWatcher defaultMode="light" disableTransitions />
+<ModeWatcher defaultMode="light" />
 {@render children?.()}

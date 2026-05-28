@@ -10,6 +10,9 @@
 	import { pb } from '$lib/pocketbase';
 	import { onMount } from 'svelte';
 	import type { RecordModel } from 'pocketbase';
+	import SunIcon from '@lucide/svelte/icons/sun';
+	import MoonIcon from '@lucide/svelte/icons/moon';
+	import { toggleMode } from 'mode-watcher';
 
 	export let data;
 	const { user } = data;
@@ -22,9 +25,7 @@
 
 	onMount(async () => {
 		try {
-			extras = await pb
-				.collection('profile')
-				.getFirstListItem(`user = "${user.id}"`);
+			extras = await pb.collection('profile').getFirstListItem(`user = "${user.id}"`);
 		} catch (err) {
 			console.log('No profile found, creating one...');
 
@@ -85,10 +86,10 @@
 
 <div class="flex min-h-screen items-center justify-center overflow-hidden">
 	<div class="m-5 mx-auto w-98 space-y-8 p-6 font-mono">
-		<Card.Root class="space-y-3 border-black p-6 bg-white">
+		<Card.Root class="space-y-3 border-black bg-white p-6 text-black">
 			<div class="items-center">
 				<div class="relative mb-4 w-fit">
-					<Avatar.Root class="h-30 w-30 border-solid border-3 border-black">
+					<Avatar.Root class="h-30 w-30 border-3 border-solid border-black">
 						<Avatar.Image
 							src={extras?.profile
 								? pb.files.getURL(extras, extras.profile, {
@@ -106,16 +107,11 @@
 
 					{#if curr_user?.id === user.id}
 						<label
-							class="absolute bottom-0 right-0 cursor-pointer rounded-full bg-black px-2 py-1 text-xs text-white"
+							class="absolute right-0 bottom-0 cursor-pointer rounded-full bg-black px-2 py-1 text-xs text-white"
 						>
 							Edit
 
-							<input
-								type="file"
-								accept="image/*"
-								class="hidden"
-								onchange={uploadAvatar}
-							/>
+							<input type="file" accept="image/*" class="hidden" onchange={uploadAvatar} />
 						</label>
 					{/if}
 				</div>
@@ -132,7 +128,7 @@
 						rows="3"
 						class="w-full rounded-md border p-2 text-sm"
 						placeholder="Write something about yourself..."
-					/>
+					></textarea>
 
 					<div class="flex items-center justify-between">
 						<p class="text-xs text-gray-500">
@@ -140,12 +136,7 @@
 						</p>
 
 						<div class="flex gap-2">
-							<Button
-								size="sm"
-								onclick={saveDescription}
-							>
-								Save
-							</Button>
+							<Button size="sm" onclick={saveDescription}>Save</Button>
 
 							<Button
 								size="sm"
@@ -158,7 +149,6 @@
 							</Button>
 						</div>
 					</div>
-
 				{:else}
 					<div class="flex items-start gap-2">
 						<p class="flex-1 text-sm">
@@ -212,14 +202,10 @@
 				{#if user.is_ngo}
 					<Badge>Events Hosted: {user.events_attended}</Badge>
 
-					<Badge
-						variant="secondary"
-						class="mt-1 bg-blue-500 text-white dark:bg-emerald-600"
-					>
+					<Badge variant="secondary" class="mt-1 bg-blue-500 text-white dark:bg-emerald-600">
 						<BadgeCheckIcon />
 						Verified NGO
 					</Badge>
-
 				{:else}
 					<Badge>Events Attended: {user.events_attended}</Badge>
 				{/if}
@@ -230,29 +216,13 @@
 			</div>
 		</Card.Root>
 
-		{#if curr_user?.id === user.id}
-			<div class="flex w-full gap-2">
-				<Button
-					variant="ghost_logout"
-					type="button"
-					class="h-10 flex-1"
-					onclick={logout}
-				>
+		
+		<div class="flex w-full gap-2">
+			{#if curr_user?.id === user.id}
+				<Button variant="ghost_logout" type="button" class="h-10 flex-1" onclick={logout}>
 					<span style="color: red">Logout</span>
 				</Button>
-
-				<Button
-					class="h-10 flex-1 bg-red-500"
-					onclick={() => {
-						window.location.href = 'mailto:helplink2048@gmail.com';
-					}}
-				>
-					Report A Problem?
-				</Button>
-			</div>
-
-		{:else}
-			<div class="flex w-full gap-2">
+			{:else}
 				<Button
 					variant="ghost_logout"
 					type="button"
@@ -263,16 +233,24 @@
 				>
 					<span style="color: red">Report User</span>
 				</Button>
-
-				<Button
-					class="h-10 flex-1 bg-red-500"
-					onclick={() => {
-						window.location.href = 'mailto:helplink2048@gmail.com';
-					}}
-				>
-					Report A Problem?
-				</Button>
-			</div>
-		{/if}
+			{/if}
+			<Button
+				class="h-10 flex-1 bg-red-500"
+				onclick={() => {
+					window.location.href = 'mailto:helplink2048@gmail.com';
+				}}
+			>
+				Report A Problem?
+			</Button>
+			<Button onclick={toggleMode} variant="outline_bu" class="h-10">
+				<SunIcon
+					class="h-[3rem] w-[3rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
+				/>
+				<MoonIcon
+					class="absolute h-[3rem] w-[3rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0 text-black"
+				/>
+				<span class="sr-only">Toggle theme</span>
+			</Button>
+		</div>
 	</div>
 </div>
