@@ -5,6 +5,12 @@
 	import { Toaster } from "$lib/components/ui/sonner/index.js";
 	import { onMount } from "svelte";
 
+    onMount(async () => {
+        if ("serviceWorker" in navigator) {
+            await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+            console.log("Service Worker Registered");
+        }
+    });
 </script>
 <Toaster position="top-center" />
 <svelte:head>

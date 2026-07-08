@@ -196,7 +196,7 @@
 								<Dialog.Content>
 									<Dialog.Header>
 										<Dialog.Title>Rate Volunteers</Dialog.Title>
-										<Dialog.Description>Give karma (1–10) to each volunteer.</Dialog.Description>
+										<Dialog.Description>Give karma (-1 – 1) to each volunteer.</Dialog.Description>
 									</Dialog.Header>
 									{#each record.status_list as status}
 										<div class="flex w-full gap-2 rounded-xl border p-4">

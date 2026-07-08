@@ -41,6 +41,7 @@
 	},
 	"dependencies": {
 		"@vite-pwa/sveltekit": "^1.0.1",
+		"firebase": "^12.15.0",
 		"leaflet": "^1.9.4",
 		"maplibre-gl": "^5.10.0",
 		"mode-watcher": "^1.1.0",

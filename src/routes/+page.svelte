@@ -14,7 +14,7 @@
 	import { goto } from '$app/navigation';
 </script>
 
-<div class="back flex min-h-screen items-center justify-center bg-background p-6 font-mono">
+<div class="back flex min-h-screen items-center justify-center p-6 font-mono">
 	<div class="w-full max-w-md space-y-10">
 		<article class="flex h-screen flex-col items-center justify-center space-y-6">
 			<div class="space-y-2 text-center">
@@ -29,7 +29,7 @@
 
 		<article class="what-is-it space-y-3 p-3">
 			<div class="space-y-2 text-center">
-				<h1 class="text-4xl font-bold tracking-tight">"What is HelpLink?"</h1>
+				<h1 class="text-4xl font-bold tracking-tight">What is HelpLink?</h1>
 			</div>
 
 			<!-- Main Card -->
@@ -51,7 +51,7 @@
 
 		<article class="how-it-works space-y-3 p-3">
 			<div class="space-y-2 text-center">
-				<h1 class="text-4xl font-bold tracking-tight">"How does it work?"</h1>
+				<h1 class="text-4xl font-bold tracking-tight">How does it work?</h1>
 			</div>
 
 			<!-- Main Card -->
@@ -73,7 +73,7 @@
 		</article>
 		<article class="why-should-we-trust-it space-y-3 p-3">
 			<div class="space-y-2 text-center">
-				<h1 class="text-4xl font-bold tracking-tight">"Why should we trust HelpLink?"</h1>
+				<h1 class="text-4xl font-bold tracking-tight">Why should we trust HelpLink?</h1>
 			</div>
 
 			<!-- Main Card -->
@@ -233,3 +233,8 @@
 		</article>
 	</div>
 </div>
+<footer class="back_d h-30 w-full max-w-md space-y-10 bg-black">
+	<div class="border-3 border-white p-3">
+		<a href="/privacy_policy">Privacy Policy | Terms & Conditions</a>
+	</div>
+</footer>

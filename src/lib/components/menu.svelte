@@ -8,8 +8,48 @@
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import { page } from '$app/stores';
 	import { toggleMode } from 'mode-watcher';
+	import { toast } from 'svelte-sonner';
+	import { getFirebaseMessaging } from '$lib/firebase';
+	import { getToken } from 'firebase/messaging';
 
 	const user = pb.authStore.record;
+
+	async function enableNotifications() {
+		if (!user!.device_id) {
+			if (!('Notification' in window)) return;
+
+			const permission = await Notification.requestPermission();
+
+			if (permission !== 'granted') {
+				toast.error('Notifications were not enabled.');
+				return;
+			}
+
+			await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+			const messaging = await getFirebaseMessaging();
+			if (!messaging) return;
+			const token = await getToken(messaging, {
+				vapidKey:
+					'BFzK3iT2LiiS-sIwngwRZrcQkdquoC243Ac1U9WUutoQ6Nl4ez0ow23ab1wkH6sQirzl3HQctNMrot20g42KPnY'
+			});
+
+			if (!token) {
+				toast.error("Couldn't obtain notification token.");
+				return;
+			}
+
+			const profile = await pb.collection("profile").getFirstListItem(
+				`user="${user!.id}"`
+			);
+
+			await pb.collection("profile").update(profile.id, {
+				device_id: token
+			});
+
+			toast.success('Notifications enabled!');
+		}
+	}
 
 	let open = false;
 
@@ -32,6 +72,7 @@
 			variant="outline_bu"
 			class="fixed bottom-7 left-1/2 z-[8] w-50 -translate-x-1/2 rounded-full text-black"
 			aria-label="menu"
+			onclick={() => {enableNotifications()}}
 		>
 			<Menu />
 		</Button>

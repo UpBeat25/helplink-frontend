@@ -3,16 +3,25 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/*
+body {
+  background-image: url("https://i.pinimg.com/originals/09/eb/c0/09ebc073a27d2c9faed8870013e78873.jpg");
+  background-repeat: no-repeat;
+  background-size: 100% 100vh;
+  background-attachment: fixed;
+}*/
 
 :root {
   --radius: 0.625rem;
-  --background: #fdc42d;
+  --background: #fdc42d; /* Primary Color fdc42d*/
   /*
-  oklch(92.437% 0.00884 264.606 / 0.509);
+  --background:  oklch(92.437% 0.00884 264.606 / 0.509);
   --background: oklch(89.204% 0.16182 105.416 / 0.817);
-  oklch(50.424% 0.27442 265.646 / 0.315)
-  oklch(100% 0.00011 271.152 / 0.817)
+  --background: oklch(50.424% 0.27442 265.646 / 0.315);
+  --background: oklch(100% 0.00011 271.152 / 0.817);
+  --background: #f2ebd8;
   */
+  
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
@@ -180,7 +189,7 @@
   border: 3px solid rgb(0, 0, 0);
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   text-align:justify;
-  border-radius: 20px;
+  border-radius: 10px;
   color:black;
 }
 
@@ -210,4 +219,19 @@
     background-position: 50% 50%;
     background-size: 1.1rem 1.1rem;
     z-index: 10;
+}
+
+.back_d{
+    background-image: radial-gradient(
+        rgba(215, 215, 215, 0.372) 1px, 
+        transparent 1px
+      );
+    background-position: 50% 50%;
+    background-size: 1.1rem 1.1rem;
+    z-index: 10;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }

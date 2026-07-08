@@ -256,7 +256,7 @@
 									<Dialog.Header>
 										<Dialog.Title>Rate Task Owner</Dialog.Title>
 										<Dialog.Description>
-											Give karma (1–10) to {owner?.username}
+											Give karma (-1 – 1) to {owner?.username}
 										</Dialog.Description>
 									</Dialog.Header>
 
@@ -285,7 +285,7 @@
 									<Dialog.Header>
 										<Dialog.Title>Rate the Event</Dialog.Title>
 										<Dialog.Description>
-											Give karma (1–10) to {owner?.username}'s event
+											Give karma (-1 – 1) to {owner?.username}'s event
 										</Dialog.Description>
 									</Dialog.Header>
 
@@ -293,7 +293,11 @@
 										<KarmaCounter bind:value={ratings[owner.id]} />
 									</div>
 
-									<Input class="items-home" bind:value={passcode} placeholder="Enter Event Passcode..." />
+									<Input
+										class="items-home"
+										bind:value={passcode}
+										placeholder="Enter Event Passcode..."
+									/>
 
 									<Dialog.Footer class="mt-4">
 										<Dialog.Close>

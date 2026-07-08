@@ -17,6 +17,8 @@
 	import { onMount } from 'svelte';
 	import { Badge } from '$lib/components/ui/badge';
 
+	const user = pb.authStore.record;
+
 	// Changed from props to local state
 	let records = $state<any[]>([]);
 	let volunteeredTaskIds = $state<Set<string>>(new Set());
@@ -31,8 +33,6 @@
 	let longitude = $state(0);
 	let error: string | null = $state(null);
 	let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-	const user = pb.authStore.record;
 
 	function getBoundingBox(lat: number, lng: number, radiusInMeters: number) {
 		const R = 6371;
@@ -138,6 +138,7 @@
 		if (user?.is_ngo) {
 			goto('/your_events');
 		}
+
 		// Load saved values from localStorage
 		if (browser) {
 			const savedDistance = localStorage.getItem('filterDistance');
