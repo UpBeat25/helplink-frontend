@@ -44,8 +44,6 @@
 			await pb.collection('profile').update(profile.id, {
 				device_id: token
 			});
-
-			toast.success('Notifications enabled!');
 		}
 	}
 
