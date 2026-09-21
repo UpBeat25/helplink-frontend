@@ -24,7 +24,12 @@
 
 	let openTaskId = $state<string | null>(null);
 
+	// Currently applied radius
 	let value = $state(250);
+
+	// Temporary slider value
+	let filterValue = $state(250);
+
 	let selected = $state('offline');
 	let offer_texts = $state<Record<string, string>>({});
 	let processing = $state(false);
@@ -33,7 +38,6 @@
 	let longitude = $state(0);
 
 	let error: string | null = $state(null);
-	let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 	// Loading state
 	let loading = $state(true);
@@ -43,8 +47,8 @@
 		const radiusInKm = radiusInMeters / 1000;
 
 		const latDelta = (radiusInKm / R) * (180 / Math.PI);
-		const lngDelta =
-			(radiusInKm / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
+
+		const lngDelta = (radiusInKm / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
 
 		return {
 			minLat: lat - latDelta,
@@ -63,11 +67,7 @@
 		const Δφ = ((lat2 - lat1) * Math.PI) / 180;
 		const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
-		const a =
-			Math.sin(Δφ / 2) ** 2 +
-			Math.cos(φ1) *
-				Math.cos(φ2) *
-				Math.sin(Δλ / 2) ** 2;
+		const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
 
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -120,13 +120,12 @@
 			});
 
 			volunteeredTaskIds = new Set(
-				volunteeredStatus.map((rec) =>
-					typeof rec.task === 'object' ? rec.task.id : rec.task
-				)
+				volunteeredStatus.map((rec) => (typeof rec.task === 'object' ? rec.task.id : rec.task))
 			);
 
 			if (browser) {
 				localStorage.setItem('filterDistance', String(value));
+
 				localStorage.setItem('filterOnlineOnly', selected);
 			}
 
@@ -142,24 +141,32 @@
 				filter: filter,
 				expand: 'uploaded_by',
 				fields: `
-					id,
-					title,
-					description,
-					by_ngo,
-					online_only,
-					lat,
-					lng,
-					uploaded_by,
-					expand.uploaded_by.id,
-					expand.uploaded_by.username
-				`
+						id,
+						title,
+						description,
+						by_ngo,
+						online_only,
+						lat,
+						lng,
+						uploaded_by,
+						expand.uploaded_by.id,
+						expand.uploaded_by.username
+					`
 			});
 		} catch (err: any) {
 			console.error('Error applying filter:', err);
+
 			toast.error('Could not load tasks.');
 		} finally {
 			loading = false;
 		}
+	}
+
+	// Apply the temporary slider value only when Submit is clicked
+	async function submitFilter() {
+		value = filterValue;
+
+		await applyFilter();
 	}
 
 	onMount(async () => {
@@ -177,10 +184,12 @@
 		// Load saved values from localStorage
 		if (browser) {
 			const savedDistance = localStorage.getItem('filterDistance');
+
 			const savedOnlineOnly = localStorage.getItem('filterOnlineOnly');
 
 			if (savedDistance) {
 				value = Number(savedDistance);
+				filterValue = Number(savedDistance);
 			}
 
 			if (savedOnlineOnly) {
@@ -194,22 +203,10 @@
 			await applyFilter();
 		} catch (err) {
 			console.error('Location error:', err);
+
 			toast.error('Could not get location. Please enable location access.');
+
 			loading = false;
-		}
-	});
-
-	// Watch for changes to filters and refresh with debounce
-	$effect(() => {
-		if (browser && latitude !== 0 && longitude !== 0) {
-			value;
-			selected;
-
-			clearTimeout(timeoutId);
-
-			timeoutId = setTimeout(() => {
-				applyFilter();
-			}, 300);
 		}
 	});
 
@@ -228,6 +225,7 @@
 
 			if (existing.length > 0) {
 				toast.error("You've already offered to help.");
+
 				processing = false;
 				return false;
 			}
@@ -260,9 +258,7 @@
 		} catch (e: any) {
 			console.error('Error creating status:', e);
 
-			toast.error(
-				'Error: ' + (e.data?.message || e.message)
-			);
+			toast.error('Error: ' + (e.data?.message || e.message));
 
 			processing = false;
 			return false;
@@ -312,7 +308,7 @@
 						<div class="p-4 pb-0">
 							<div class="flex items-center justify-center space-x-2">
 								<div class="text-7xl font-bold tracking-tighter">
-									{value} m
+									{filterValue} m
 								</div>
 							</div>
 
@@ -321,13 +317,7 @@
 							<div class="flex items-center justify-center space-x-2">
 								<span>100</span>
 
-								<Slider
-									type="single"
-									bind:value
-									min={100}
-									max={5000}
-									step={10}
-								/>
+								<Slider type="single" bind:value={filterValue} min={100} max={5000} step={10} />
 
 								<span>5km</span>
 							</div>
@@ -336,9 +326,7 @@
 
 					<Drawer.Footer>
 						<Drawer.Close>
-							<Button class="w-80">
-								Submit
-							</Button>
+							<Button class="w-80" onclick={submitFilter}>Submit</Button>
 						</Drawer.Close>
 					</Drawer.Footer>
 				</div>
@@ -382,12 +370,7 @@
 										</Label>
 
 										{#if !record.by_ngo}
-											<Badge
-												variant="secondary"
-												class="mt-1 bg-emerald-400 text-white"
-											>
-												Task
-											</Badge>
+											<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
 										{:else}
 											<Badge
 												variant="secondary"
@@ -411,16 +394,9 @@
 							</Item.Root>
 						</Collapsible.Trigger>
 
-						<Collapsible.Content
-							class="items-home space-y-2 rounded-md border px-4 py-3 font-mono"
-						>
+						<Collapsible.Content class="items-home space-y-2 rounded-md border px-4 py-3 font-mono">
 							<Label class="text-muted-foreground">
-								{distance(
-									latitude,
-									longitude,
-									record.lat,
-									record.lng
-								).toFixed(2)}
+								{distance(latitude, longitude, record.lat, record.lng).toFixed(2)}
 								meters away
 							</Label>
 
@@ -435,42 +411,23 @@
 							<div></div>
 
 							{#if !offer_texts[record.id] && !record.by_ngo}
-								<Button
-									type="submit"
-									class="w-full"
-									disabled
-								>
-									Help
-								</Button>
-
+								<Button type="submit" class="w-full" disabled>Help</Button>
 							{:else if processing}
 								<Button disabled class="w-full">
 									<Spinner class="mr-2" />
 									Please Wait...
 								</Button>
-
 							{:else if record.by_ngo}
 								<Button
 									class="w-full bg-blue-600 dark:bg-blue-400"
-									onclick={() =>
-										help_user(
-											record.id,
-											'Attending',
-											true
-										)}
+									onclick={() => help_user(record.id, 'Attending', true)}
 								>
 									Attend Event!
 								</Button>
-
 							{:else}
 								<Button
 									class="w-full bg-background text-black"
-									onclick={() =>
-										help_user(
-											record.id,
-											offer_texts[record.id],
-											false
-										)}
+									onclick={() => help_user(record.id, offer_texts[record.id], false)}
 								>
 									Help
 								</Button>

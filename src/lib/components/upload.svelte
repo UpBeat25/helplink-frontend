@@ -92,6 +92,31 @@
 		}, 100);
 	}
 
+	async function refreshMap() {
+		if (!L || !map || !marker) return;
+
+		try {
+			// Get fresh GPS location
+			const pos = await getLocation();
+
+			// Move map to new location
+			map.setView([pos.lat, pos.lng], 13);
+
+			// Move marker
+			marker.setLatLng([pos.lat, pos.lng]);
+
+			// Force Leaflet to redraw correctly
+			setTimeout(() => {
+				map.invalidateSize();
+			}, 100);
+
+			toast.success('Map location refreshed');
+		} catch (e) {
+			console.warn(e);
+			toast.error('Unable to refresh your location');
+		}
+	}
+
 	const user = pb.authStore.record;
 
 	onMount(async () => {
@@ -165,7 +190,7 @@
 </script>
 
 <SideMenu />
-<Card.Root class="mx-auto w-full max-w-sm pt-8 bg-neutral-50 text-black">
+<Card.Root class="mx-auto w-full max-w-sm bg-neutral-50 pt-8 text-black">
 	<Card.Header>
 		<Card.Title class="text-2xl">Ask For a Hand</Card.Title>
 		<Card.Description>Please enter the details and nature of the task below</Card.Description>
@@ -228,9 +253,15 @@
 							{#if latitude !== null && longitude !== null}
 								<!-- ✅ Bind element reference for map -->
 								<div bind:this={mapContainer} class="z-[6] h-64 w-full rounded-lg border"></div>
-								<div class="mt-2 flex space-x-4 text-sm text-muted-foreground">
-									<div>Lat: {latitude.toFixed(6)}</div>
-									<div>Lng: {longitude.toFixed(6)}</div>
+								<div class="mt-2 flex items-center justify-between gap-4">
+									<div class="flex space-x-4 text-sm text-muted-foreground">
+										<div>Lat: {latitude.toFixed(6)}</div>
+										<div>Lng: {longitude.toFixed(6)}</div>
+									</div>
+
+									<Button type="button" variant="outline" size="sm" onclick={refreshMap}>
+										Refresh Map
+									</Button>
 								</div>
 							{:else if error}
 								<p class="p-2 text-sm text-red-500">{error}</p>
