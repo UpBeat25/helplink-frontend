@@ -18,7 +18,7 @@
 	<div class="w-full max-w-md space-y-10">
 		<article class="flex h-screen flex-col items-center justify-center space-y-6">
 			<div class="space-y-2 text-center">
-				<h1 class="text-7xl font-bold tracking-tight">HelpLink.</h1>
+				<h1 class="text-7xl font-bold tracking-tight home-cards">HelpLink.</h1>
 				<p class="text-sm">Get Help. Give Help. Build Community.</p>
 			</div>
 
@@ -28,7 +28,7 @@
 		</article>
 
 		<article class="what-is-it space-y-3 p-3">
-			<div class="space-y-2 text-center">
+			<div class="space-y-2 text-center home-cards">
 				<h1 class="text-4xl font-bold tracking-tight">What is HelpLink?</h1>
 			</div>
 
@@ -50,7 +50,7 @@
 		</article>
 
 		<article class="how-it-works space-y-3 p-3">
-			<div class="space-y-2 text-center">
+			<div class="space-y-2 text-center home-cards">
 				<h1 class="text-4xl font-bold tracking-tight">How does it work?</h1>
 			</div>
 
@@ -72,7 +72,7 @@
 			</Card>
 		</article>
 		<article class="why-should-we-trust-it space-y-3 p-3">
-			<div class="space-y-2 text-center">
+			<div class="space-y-2 text-center home-cards">
 				<h1 class="text-4xl font-bold tracking-tight">Why should we trust HelpLink?</h1>
 			</div>
 
@@ -109,7 +109,7 @@
 
 		<article class="flex h-screen flex-col items-center justify-center space-y-6">
 			<div class="space-y-2 text-center">
-				<h1 class="text-5xl font-bold tracking-tight">Our Partners</h1>
+				<h1 class="text-5xl font-bold tracking-tight home-cards">Our Partners</h1>
 				<p class="text-sm">
 					We express our heartfelt gratitude to all the organizations that have partnered with us to
 					support the mission of making a more inclusive community and to honour their
@@ -129,7 +129,7 @@
 		</article>
 		<article class="install">
 			<div class="space-y-2 text-center">
-				<h1 class="text-4xl font-bold tracking-tight">Installation</h1>
+				<h1 class="text-4xl font-bold tracking-tight home-cards">Installation</h1>
 				<p class="text-m">Install HelpLink on your device for a fast, app-like experience.</p>
 			</div>
 

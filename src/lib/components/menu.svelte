@@ -39,11 +39,9 @@
 				return;
 			}
 
-			const profile = await pb.collection("profile").getFirstListItem(
-				`user="${user!.id}"`
-			);
+			const profile = await pb.collection('profile').getFirstListItem(`user="${user!.id}"`);
 
-			await pb.collection("profile").update(profile.id, {
+			await pb.collection('profile').update(profile.id, {
 				device_id: token
 			});
 
@@ -72,7 +70,9 @@
 			variant="outline_bu"
 			class="fixed bottom-7 left-1/2 z-[8] w-50 -translate-x-1/2 rounded-full text-black"
 			aria-label="menu"
-			onclick={() => {enableNotifications()}}
+			onclick={() => {
+				enableNotifications();
+			}}
 		>
 			<Menu />
 		</Button>
@@ -82,52 +82,70 @@
 			<h1 class="menu_font">
 				Menu{#if user?.is_ngo}: NGO Account{/if}
 			</h1>
-			{#if !user?.is_ngo}
-				<Button variant="outline_m" size="lg" type="button" onclick={() => navigate('/home')}
-					>Home</Button
+			<div class="grid grid-cols-2 gap-3">
+				{#if !user?.is_ngo}
+					<Button variant="outline_m" size="lg" type="button" onclick={() => navigate('/home')}
+						>Home</Button
+					>
+					<Button
+						variant="outline_m"
+						size="lg"
+						type="button"
+						onclick={() => {
+							navigate('/upload');
+						}}>New Request</Button
+					>
+					<Button
+						variant="outline_m"
+						size="lg"
+						type="button"
+						onclick={() => {
+							navigate('/view_tasks');
+						}}>Your Offers</Button
+					>
+					<Button
+						variant="outline_m"
+						size="lg"
+						type="button"
+						onclick={() => {
+							navigate('/your_tasks');
+						}}>Your Tasks</Button
+					>
+				{:else}
+					<Button
+						variant="outline_m"
+						size="lg"
+						type="button"
+						onclick={() => {
+							navigate('/upload_ngo');
+						}}>Create A New Event</Button
+					>
+					<Button
+						variant="outline_m"
+						size="lg"
+						type="button"
+						onclick={() => {
+							navigate('/your_events');
+						}}>Your Active Events</Button
+					>
+				{/if}
+				<Button
+					variant="outline_m"
+					size="lg"
+					type="button"
+					onclick={() => {
+						navigate(`/social`);
+					}}>Social</Button
 				>
 				<Button
 					variant="outline_m"
 					size="lg"
 					type="button"
 					onclick={() => {
-						navigate('/upload');
-					}}>New Request</Button
+						navigate(`/post`);
+					}}>Create Post</Button
 				>
-				<Button
-					variant="outline_m"
-					size="lg"
-					type="button"
-					onclick={() => {
-						navigate('/view_tasks');
-					}}>Your Offers</Button
-				>
-				<Button
-					variant="outline_m"
-					size="lg"
-					type="button"
-					onclick={() => {
-						navigate('/your_tasks');
-					}}>Your Tasks</Button
-				>
-			{:else}
-				<Button
-					variant="outline_m"
-					size="lg"
-					type="button"
-					onclick={() => {
-						navigate('/upload_ngo');
-					}}>Create A New Event</Button
-				>
-				<Button
-					variant="outline_m"
-					size="lg"
-					type="button"
-					onclick={() => {
-						navigate('/your_events');
-					}}>Your Active Events</Button
-				>
-			{/if}
+			</div>
 			<Button
 				variant="outline_m"
 				size="lg"
@@ -136,7 +154,6 @@
 					navigate(`/profile/${user?.username}`);
 				}}>Your Profile</Button
 			>
-
 			<!--
 			<Button onclick={toggleMode} variant="outline">
 				<SunIcon

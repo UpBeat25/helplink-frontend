@@ -14,6 +14,7 @@
 	import { toast } from 'svelte-sonner';
 	import { onMount } from 'svelte';
 	import SideMenu from '$lib/components/menu.svelte';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
 
 	let ratings = $state<any>({});
 	let { records } = $props();
@@ -21,6 +22,7 @@
 	const user = pb.authStore.record;
 
 	let openTaskId = $state<string | null>(null);
+	let loading = $state(true);
 
 	onMount(async () => {
 		const user = pb.authStore.record;
@@ -31,7 +33,14 @@
 			return;
 		}
 
-		await get_your_tasks(user);
+		try {
+			await get_your_tasks(user);
+		} catch (err) {
+			console.error(err);
+			toast.error('Unable to load your tasks');
+		} finally {
+			loading = false;
+		}
 	});
 
 	async function get_your_tasks(user: any) {
@@ -54,16 +63,14 @@
 
 			// Default ratings
 			for (let status of statusList) {
-				newRatings[status.id] = 5;
+				newRatings[status.id] = 0;
 			}
 
-			// 🔴 DELETE LOGIC
 			// Block delete if ANY accepted or completed volunteer exists
 			task.hasActiveVolunteer = statusList.some(
 				(s) => s.status === 'accepted' || s.status === 'completed'
 			);
 
-			// 🟢 COMPLETION LOGIC
 			// Only consider accepted + completed volunteers
 			const acceptedVolunteers = statusList.filter(
 				(s) => s.status === 'accepted' || s.status === 'completed'
@@ -98,19 +105,24 @@
 		}
 	}
 
-	async function mark_completed(taskId: string) {
+	async function mark_completed(taskId: string, post: boolean = false) {
 		try {
 			await delete_all_status_for_task(taskId);
 			await pb.collection('tasks').delete(taskId);
 			toast.success(`Task Completed`);
 			await get_your_tasks(user);
-			window.location.reload();
+
+			if (post) {
+				goto('/post');
+			} else {
+				window.location.reload();
+			}
 		} catch (e) {
 			toast.error('Error completing task');
 		}
 	}
 
-	async function submitKarma(record: any) {
+	async function submitKarma(record: any, post: boolean = false) {
 		try {
 			for (let status of record.status_list) {
 				if (status.status !== 'completed') continue;
@@ -126,7 +138,7 @@
 			}
 
 			toast.success('Ratings submitted successfully!');
-			await mark_completed(record.id);
+			await mark_completed(record.id, post);
 		} catch (err) {
 			console.error(err);
 			toast.error('Failed to submit karma');
@@ -152,154 +164,177 @@
 	<h1 class="title-font mt-4 ml-2 text-4xl"><b>Your Tasks.</b></h1>
 	<SideMenu />
 
-	{#if !records || records.length === 0}
+	{#if loading}
+		<div class="mt-12 flex items-center justify-center">
+			<Spinner class="h-8 w-8" />
+		</div>
+	{:else if !records || records.length === 0}
 		<div class="mt-8 flex items-center justify-center text-muted-foreground">
 			<p>No active tasks uploaded by you...</p>
 		</div>
-	{/if}
-
-	{#each records as record}
-		<div class="flex w-full flex-col gap-2 px-4">
-			<Collapsible.Root
-				class="mx-auto w-full max-w-sm space-y-2"
-				open={openTaskId === record.id}
-				onOpenChange={(open) => {
-					openTaskId = open ? record.id : null;
-				}}
-			>
-				<Item.Root variant="outline">
-					<Item.Content>
-						<Item.Title>{record.title}</Item.Title>
-						<Item.Description>View Volunteers</Item.Description>
-					</Item.Content>
-
-					<div class="flex w-full gap-2">
-						<Item.Actions>
-							<Collapsible.Trigger>
-								<Button size="icon" variant="outline" class="rounded-full">
-									<Arrow />
-								</Button>
-							</Collapsible.Trigger>
-						</Item.Actions>
-
-						<!-- Show Delete Task only if no volunteers OR none accepted -->
-						{#if !record.hasActiveVolunteer}
-							<Button variant="destructive" onclick={() => delete_task(record.id)}>
-								Delete Task
-							</Button>
-						{:else}
-							<!-- Show Mark as Complete only if all are accepted -->
-							<Dialog.Root>
-								<Button disabled={!record.canMarkComplete}>
-									<Dialog.Trigger>Mark as Complete</Dialog.Trigger></Button
-								>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>Rate Volunteers</Dialog.Title>
-										<Dialog.Description>Give karma (-1 – 1) to each volunteer.</Dialog.Description>
-									</Dialog.Header>
-									{#each record.status_list as status}
-										<div class="flex w-full gap-2 rounded-xl border p-4">
-											<div class="mb-2 flex-1 text-lg font-semibold">
-												{status.expand.user.username}
-											</div>
-											<KarmaCounter bind:value={ratings[status.id]} />
-										</div>
-									{/each}
-
-									<Dialog.Footer class="mt-4">
-										<Dialog.Root>
-											<Dialog.Trigger>
-												<Button>Submit Ratings</Button>
-											</Dialog.Trigger>
-											<Dialog.Content>
-												<Dialog.Header>
-													<Dialog.Title>Make the Day More Memorable?</Dialog.Title>
-													<Dialog.Description>
-														This is completely optional but we would appreciate if you shared a
-														selfie of you and the others to remember this day. Kindly attach the
-														selfie with the instagram usernames of the the people so that they can
-														be tagged.
-													</Dialog.Description>
-												</Dialog.Header>
-												<div class="grid gap-4 py-4">
-													<div class="items-center gap-4">
-														<a href="https://ig.me/m/helplink.dev" class="w-full">
-															<Button class="w-full bg-background text-black">Message Us!</Button>
-														</a>
-													</div>
-												</div>
-												<Dialog.Footer>
-													<Button
-														type="submit"
-														onclick={() => {
-															submitKarma(record);
-														}}>Thank you!</Button
-													>
-												</Dialog.Footer>
-											</Dialog.Content>
-										</Dialog.Root>
-									</Dialog.Footer>
-								</Dialog.Content>
-							</Dialog.Root>
-						{/if}
-					</div>
-				</Item.Root>
-
-				<Collapsible.Content
-					class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+	{:else}
+		{#each records as record}
+			<div class="flex w-full flex-col gap-2 px-4">
+				<Collapsible.Root
+					class="mx-auto w-full max-w-sm space-y-2"
+					open={openTaskId === record.id}
+					onOpenChange={(open) => {
+						openTaskId = open ? record.id : null;
+					}}
 				>
-					<Label>Description:</Label>
-					<div class="text-sm text-muted-foreground">
-						{record.description}
-					</div>
+					<Item.Root variant="outline">
+						<Item.Content>
+							<Item.Title>{record.title}</Item.Title>
+							<Item.Description>View Volunteers</Item.Description>
+						</Item.Content>
 
-					<Label class="text-sm">Volunteers:</Label>
-					<div class="text-sm">
-						{#each record.status_list as status}
-							<Item.Root variant="outline" class="rounded-xl p-3">
-								<div class="grid w-full grid-cols-2 items-center">
-									<!-- Left section -->
-									<div class="flex-row">
-										<div class="absolute">
-											<a href={'/profile/' + status.expand.user.username}
-												>{status.expand.user.username}</a
-											>
-											– {status.status}
+						<div class="flex w-full gap-2">
+							<Item.Actions>
+								<Collapsible.Trigger>
+									<Button size="icon" variant="outline" class="rounded-full">
+										<Arrow />
+									</Button>
+								</Collapsible.Trigger>
+							</Item.Actions>
+
+							<!-- Show Delete Task only if no volunteers OR none accepted -->
+							{#if !record.hasActiveVolunteer}
+								<Button variant="destructive" onclick={() => delete_task(record.id)}>
+									Delete Task
+								</Button>
+							{:else}
+								<!-- Show Mark as Complete only if all are completed -->
+								<Dialog.Root>
+									<Button disabled={!record.canMarkComplete}>
+										<Dialog.Trigger>Mark as Complete</Dialog.Trigger>
+									</Button>
+
+									<Dialog.Content>
+										<Dialog.Header>
+											<Dialog.Title>Rate Volunteers</Dialog.Title>
+											<Dialog.Description>
+												Give karma (-1 – 1) to each volunteer.
+											</Dialog.Description>
+										</Dialog.Header>
+
+										{#each record.status_list as status}
+											<div class="flex w-full gap-2 rounded-xl border p-4">
+												<div class="mb-2 flex-1 text-lg font-semibold">
+													{status.expand.user.username}
+												</div>
+
+												<KarmaCounter bind:value={ratings[status.id]} />
+											</div>
+										{/each}
+
+										<Dialog.Footer class="mt-4">
+											<Dialog.Root>
+												<Dialog.Trigger>
+													<Button>Submit Ratings</Button>
+												</Dialog.Trigger>
+
+												<Dialog.Content>
+													<Dialog.Header>
+														<Dialog.Title>Make the Day More Memorable?</Dialog.Title>
+
+														<Dialog.Description>
+															Post a story and share your experience with the world! This is
+															completely optional.
+														</Dialog.Description>
+													</Dialog.Header>
+
+													<div class="grid gap-4 py-4">
+														<Button
+															type="submit"
+															onclick={() => {
+																submitKarma(record, true);
+															}}
+														>
+															Post
+														</Button>
+													</div>
+
+													<Dialog.Footer>
+														<Button
+															type="submit"
+															onclick={() => {
+																submitKarma(record);
+															}}
+														>
+															Complete without posting
+														</Button>
+													</Dialog.Footer>
+												</Dialog.Content>
+											</Dialog.Root>
+										</Dialog.Footer>
+									</Dialog.Content>
+								</Dialog.Root>
+							{/if}
+						</div>
+					</Item.Root>
+
+					<Collapsible.Content
+						class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+					>
+						<Label>Description:</Label>
+
+						<div class="text-sm text-muted-foreground">
+							{record.description}
+						</div>
+
+						<Label class="text-sm">Volunteers:</Label>
+
+						<div class="text-sm">
+							{#each record.status_list as status}
+								<Item.Root variant="outline" class="rounded-xl p-3">
+									<div class="grid w-full grid-cols-2 items-center">
+										<!-- Left section -->
+										<div class="flex-row">
+											<div class="absolute">
+												<a href={'/profile/' + status.expand.user.username}>
+													{status.expand.user.username}
+												</a>
+												– {status.status}
+											</div>
+
+											<br />
+
+											<span class="text-sm text-muted-foreground">
+												Offer: {status.offer}
+											</span>
 										</div>
-										<br />
-										<span class="text-sm text-muted-foreground">Offer: {status.offer}</span>
+
+										<!-- Right section -->
+										{#if status.status === 'pending'}
+											<div class="flex justify-end gap-2">
+												<Button
+													variant="secondary"
+													size="icon"
+													class="size-8"
+													onclick={() => update_status(status.id, 'accepted')}
+												>
+													<Check color="#00ff6e" />
+												</Button>
+
+												<Button
+													variant="secondary"
+													size="icon"
+													class="size-8"
+													onclick={() => update_status(status.id, 'rejected')}
+												>
+													<X color="red" />
+												</Button>
+											</div>
+										{/if}
 									</div>
+								</Item.Root>
+							{/each}
+						</div>
+					</Collapsible.Content>
 
-									<!-- Right section -->
-									{#if status.status === 'pending'}
-										<div class="flex justify-end gap-2">
-											<Button
-												variant="secondary"
-												size="icon"
-												class="size-8"
-												onclick={() => update_status(status.id, 'accepted')}
-											>
-												<Check color="#00ff6e" />
-											</Button>
-
-											<Button
-												variant="secondary"
-												size="icon"
-												class="size-8"
-												onclick={() => update_status(status.id, 'rejected')}
-											>
-												<X color="red" />
-											</Button>
-										</div>
-									{/if}
-								</div>
-							</Item.Root>
-						{/each}
-					</div>
-				</Collapsible.Content>
-				<span></span>
-			</Collapsible.Root>
-		</div>
-	{/each}
+					<span></span>
+				</Collapsible.Root>
+			</div>
+		{/each}
+	{/if}
 </div>

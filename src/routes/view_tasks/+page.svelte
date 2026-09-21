@@ -15,68 +15,71 @@
 	import { toast } from 'svelte-sonner';
 	import { onMount } from 'svelte';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
 
 	let { records } = $props();
 
 	let ratings = $state<any>({});
-
 	let privateNotes = $state<Record<string, string>>({});
-
 	let openTaskId = $state<string | null>(null);
-
 	let passcode = $state('');
+	let loading = $state(true);
 
 	const user = pb.authStore.record;
 
-	onMount(() => {
+	async function get_tasks() {
 		if (!user) {
 			toast.error('You must be logged in');
-			goto('/login');
-		}
-	});
-
-	async function get_tasks() {
-		if (!user) return toast.error('You must be logged in');
-
-		const fetchedRecords = await pb.collection('status').getFullList({
-			filter: `user="${user.id}"`,
-			sort: '-created',
-			expand: 'task,task.uploaded_by',
-			fields: `
-			id,
-			status,
-			offer,
-			expand.task.id,
-			expand.task.title,
-			expand.task.by_ngo,
-			expand.task.description,
-			expand.task.share_loc,
-			expand.task.lat,
-    		expand.task.lng,
-			expand.task.uploaded_by,
-			expand.task.expand.uploaded_by.id,
-			expand.task.expand.uploaded_by.username
-		`
-		});
-
-		// Initialize ratings for each task owner
-		const newRatings: any = {};
-		for (let record of fetchedRecords) {
-			const ownerId = record.expand?.task?.uploaded_by;
-			if (ownerId && !newRatings[ownerId]) {
-				newRatings[ownerId] = 5; // Default rating
-			}
+			return;
 		}
 
-		ratings = newRatings;
-		records = fetchedRecords;
-		for (let record of fetchedRecords) {
-			if (record.status === 'accepted') {
-				await getPrivateNote(record.expand?.task.id);
+		try {
+			const fetchedRecords = await pb.collection('status').getFullList({
+				filter: `user="${user.id}"`,
+				sort: '-created',
+				expand: 'task,task.uploaded_by',
+				fields: `
+					id,
+					status,
+					offer,
+					expand.task.id,
+					expand.task.title,
+					expand.task.by_ngo,
+					expand.task.description,
+					expand.task.share_loc,
+					expand.task.lat,
+					expand.task.lng,
+					expand.task.uploaded_by,
+					expand.task.expand.uploaded_by.id,
+					expand.task.expand.uploaded_by.username
+				`
+			});
+
+			// Initialize ratings for each task owner
+			const newRatings: any = {};
+
+			for (let record of fetchedRecords) {
+				const ownerId = record.expand?.task?.uploaded_by;
+
+				if (ownerId && !newRatings[ownerId]) {
+					newRatings[ownerId] = 5;
+				}
 			}
+
+			ratings = newRatings;
+			records = fetchedRecords;
+
+			// Load private notes for accepted tasks
+			for (let record of fetchedRecords) {
+				if (record.status === 'accepted') {
+					await getPrivateNote(record.expand?.task.id);
+				}
+			}
+		} catch (e: any) {
+			console.error('Failed to load offers:', e);
+			toast.error('Failed to load your offers.');
 		}
 	}
-	get_tasks();
 
 	async function getPrivateNote(taskId: string) {
 		try {
@@ -89,18 +92,21 @@
 			console.error('Failed to fetch private note');
 		}
 	}
+
 	async function remove_help(status_id: string) {
 		if (!user) {
 			toast.error('You must be logged in');
 			goto('/login');
 			return;
 		}
+
 		try {
-			// 1. Delete status record
+			// Delete status record
 			await pb.collection('status').delete(status_id);
 
 			toast.success('Success!');
-			// 5. Refresh
+
+			// Refresh records locally
 			records = records.filter((r: any) => r.id !== status_id);
 		} catch (e: any) {
 			toast.error('Failed to cancel offer: ' + e.message);
@@ -112,10 +118,12 @@
 		if (!user) {
 			return;
 		}
+
 		if (passcode === priv) {
 			await pb.collection('users').update(ownerId, {
 				events_attended: user.events_attended + 1
 			});
+
 			await mark_completed(task_id, ownerId);
 		} else {
 			toast.error('Incorrect Passcode');
@@ -135,7 +143,7 @@
 				status: 'completed'
 			});
 
-			// Update the task owner's karma
+			// Update task owner's karma
 			const owner = await pb.collection('users').getOne(ownerId);
 			const newKarma = ratings[ownerId] || 5;
 
@@ -147,9 +155,27 @@
 
 			await get_tasks();
 		} catch (e) {
+			console.error(e);
 			toast.error('Error updating task status');
 		}
 	}
+
+	onMount(async () => {
+		if (!user) {
+			toast.error('You must be logged in');
+			goto('/login');
+			loading = false;
+			return;
+		}
+
+		loading = true;
+
+		try {
+			await get_tasks();
+		} finally {
+			loading = false;
+		}
+	});
 </script>
 
 <div class="pt-8 pr-3 pl-3 font-mono">
@@ -157,190 +183,226 @@
 
 	<SideMenu />
 
-	{#if !records || records.length === 0}
+	{#if loading}
+		<!-- Loading state -->
+		<div class="mt-12 flex w-full items-center justify-center">
+			<Spinner class="h-8 w-8" />
+		</div>
+	{:else if !records || records.length === 0}
+		<!-- Empty state -->
 		<div class="mt-8 flex items-center justify-center text-muted-foreground">
 			<div>No offers made yet...</div>
 		</div>
-	{/if}
+	{:else}
+		<!-- Offers -->
+		{#each records as record}
+			{@const task_id = record.expand.task.id}
+			{@const task_title = record.expand.task.title}
+			{@const task_by_ngo = record.expand.task.by_ngo}
+			{@const task_description = record.expand.task.description}
+			{@const owner = record.expand.task.expand.uploaded_by}
 
-	{#each records as record}
-		{@const task_id = record.expand.task.id}
-		{@const task_title = record.expand.task.title}
-		{@const task_by_ngo = record.expand.task.by_ngo}
-		{@const task_description = record.expand.task.description}
-		{@const owner = record.expand.task.expand.uploaded_by}
-		<div class="flex w-full flex-col gap-2 px-4">
-			<Collapsible.Root
-				class="mx-auto w-full max-w-sm space-y-2"
-				open={openTaskId === record.id}
-				onOpenChange={(open) => {
-					openTaskId = open ? record.id : null;
-				}}
-			>
-				<Collapsible.Trigger class="w-full max-w-sm">
-					<Item.Root variant="outline">
-						<Item.Content>
-							<div class="flex w-full gap-2">
-								<Label
-									style="cursor: pointer;"
-									onclick={() => {
-										goto(`/profile/${owner?.username}`);
-									}}
-									class="text-xs"
-								>
-									@{owner?.username || 'Unknown User'}
-									-
-								</Label>
-								{#if !task_by_ngo}
-									<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
-								{:else}
-									<Badge variant="secondary" class="mt-1 bg-blue-600 text-white dark:bg-blue-400">
-										Event
-									</Badge>
-								{/if}
-							</div>
-							<Item.Title class="text-base">{task_title}</Item.Title>
-							{#if !task_by_ngo}
-								<Item.Description
-									><b class="text-black">Status:</b>
-									{#if record.status == 'accepted'}
-										<span class="text-emerald-400">accepted</span>
-									{:else if record.status == 'pending'}
-										<span class="text-yellow-500">pending</span>
-									{:else if record.status == 'rejected'}
-										<span class="text-red-600">rejected</span>
-									{:else}
-										<span>completed</span>
-									{/if}
-								</Item.Description>
-							{/if}
-						</Item.Content>
-					</Item.Root>
-				</Collapsible.Trigger>
-
-				<Collapsible.Content
-					class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+			<div class="flex w-full flex-col gap-2 px-4">
+				<Collapsible.Root
+					class="mx-auto w-full max-w-sm space-y-2"
+					open={openTaskId === record.id}
+					onOpenChange={(open) => {
+						openTaskId = open ? record.id : null;
+					}}
 				>
-					<Label>Description:</Label>
-					<div class="text-sm text-muted-foreground">
-						{task_description}
-					</div>
-					{#if !task_by_ngo}
-						<Label class="text-sm">Your Offer:</Label>
+					<Collapsible.Trigger class="w-full max-w-sm">
+						<Item.Root variant="outline">
+							<Item.Content>
+								<div class="flex w-full gap-2">
+									<Label
+										style="cursor: pointer;"
+										onclick={() => {
+											goto(`/profile/${owner?.username}`);
+										}}
+										class="text-xs"
+									>
+										@{owner?.username || 'Unknown User'} -
+									</Label>
+
+									{#if !task_by_ngo}
+										<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
+									{:else}
+										<Badge variant="secondary" class="mt-1 bg-blue-600 text-white dark:bg-blue-400">
+											Event
+										</Badge>
+									{/if}
+								</div>
+
+								<Item.Title class="text-base">
+									{task_title}
+								</Item.Title>
+
+								{#if !task_by_ngo}
+									<Item.Description>
+										<b class="text-black">Status:</b>
+
+										{#if record.status == 'accepted'}
+											<span class="text-emerald-400">accepted</span>
+										{:else if record.status == 'pending'}
+											<span class="text-yellow-500">pending</span>
+										{:else if record.status == 'rejected'}
+											<span class="text-red-600">rejected</span>
+										{:else}
+											<span>completed</span>
+										{/if}
+									</Item.Description>
+								{/if}
+							</Item.Content>
+						</Item.Root>
+					</Collapsible.Trigger>
+
+					<Collapsible.Content
+						class="items-home w-full space-y-2 rounded-md border px-4 py-3 font-mono"
+					>
+						<Label>Description:</Label>
+
 						<div class="text-sm text-muted-foreground">
-							{record.offer}
+							{task_description}
 						</div>
-					{/if}
-					{#if record.status === 'accepted'}
-						{@const task_private_note = privateNotes[task_id]}
-						{@const task_share_loc = record.expand.task.share_loc}
+
 						{#if !task_by_ngo}
-							<Label>Private Note:</Label>
+							<Label class="text-sm">Your Offer:</Label>
+
 							<div class="text-sm text-muted-foreground">
-								{task_private_note}
+								{record.offer}
 							</div>
 						{/if}
-						{#if task_share_loc}
-							{@const task_lat = record.expand.task.lat}
-							{@const task_lng = record.expand.task.lng}
-							<Button class="w-full" href="https://www.google.com/maps?q={task_lat},{task_lng}">
-								Location
-							</Button>
-						{/if}
-						{#if !task_by_ngo}
-							<Dialog.Root>
-								<Dialog.Trigger class="w-full">
-									<Button class="w-full bg-emerald-400">Mark as Complete</Button>
-								</Dialog.Trigger>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>Rate Task Owner</Dialog.Title>
-										<Dialog.Description>
-											Give karma (-1 – 1) to {owner?.username}
-										</Dialog.Description>
-									</Dialog.Header>
 
-									<div class="flex w-full items-center justify-center rounded-xl border p-4">
-										<KarmaCounter bind:value={ratings[owner.id]} />
-									</div>
+						{#if record.status === 'accepted'}
+							{@const task_private_note = privateNotes[task_id]}
+							{@const task_share_loc = record.expand.task.share_loc}
 
-									<Dialog.Footer class="mt-4">
-										<Dialog.Close>
-											<Button onclick={() => mark_completed(task_id, owner?.id)}>
-												Submit Rating
-											</Button>
-										</Dialog.Close>
-									</Dialog.Footer>
-								</Dialog.Content>
-							</Dialog.Root>
-						{/if}
+							{#if !task_by_ngo}
+								<Label>Private Note:</Label>
 
-						{#if task_by_ngo}
-							{@const priv = privateNotes[task_id]}
-							<Dialog.Root>
-								<Dialog.Trigger class="w-full">
-									<Button class="w-full bg-blue-600 dark:bg-blue-400">Mark as Complete</Button>
-								</Dialog.Trigger>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>Rate the Event</Dialog.Title>
-										<Dialog.Description>
-											Give karma (-1 – 1) to {owner?.username}'s event
-										</Dialog.Description>
-									</Dialog.Header>
+								<div class="text-sm text-muted-foreground">
+									{task_private_note}
+								</div>
+							{/if}
 
-									<div class="flex w-full items-center justify-center rounded-xl p-4">
-										<KarmaCounter bind:value={ratings[owner.id]} />
-									</div>
+							{#if task_share_loc}
+								{@const task_lat = record.expand.task.lat}
+								{@const task_lng = record.expand.task.lng}
 
-									<Input
-										class="items-home"
-										bind:value={passcode}
-										placeholder="Enter Event Passcode..."
-									/>
-
-									<Dialog.Footer class="mt-4">
-										<Dialog.Close>
-											<Button onclick={() => mark_completed_ngo(task_id, priv, owner?.id)}>
-												Submit
-											</Button>
-										</Dialog.Close>
-									</Dialog.Footer>
-								</Dialog.Content>
-							</Dialog.Root>
-						{/if}
-					{/if}
-
-					{#if record.status === 'pending'}
-						<Dialog.Root>
-							<Dialog.Trigger class="w-full">
-								<Button class="w-full" variant="destructive">
-									Remove {#if !task_by_ngo}Help{:else}Event{/if}
+								<Button class="w-full" href="https://www.google.com/maps?q={task_lat},{task_lng}">
+									Location
 								</Button>
-							</Dialog.Trigger>
-							<Dialog.Content>
-								<Dialog.Header>
-									<Dialog.Title>Are you sure absolutely sure?</Dialog.Title>
-									<Dialog.Description>This action cannot be undone.</Dialog.Description>
-								</Dialog.Header>
-								<Dialog.Footer>
-									<Dialog.Close>
-										<Button
-											class="w-full"
-											variant="destructive"
-											type="submit"
-											onclick={() => remove_help(record.id)}
-										>
-											Yes, Confirm
-										</Button>
-									</Dialog.Close>
-								</Dialog.Footer>
-							</Dialog.Content>
-						</Dialog.Root>
-					{/if}
-				</Collapsible.Content>
-				<span></span>
-			</Collapsible.Root>
-		</div>
-	{/each}
+							{/if}
+
+							{#if !task_by_ngo}
+								<Dialog.Root>
+									<Dialog.Trigger class="w-full">
+										<Button class="w-full bg-emerald-400">Mark as Complete</Button>
+									</Dialog.Trigger>
+
+									<Dialog.Content>
+										<Dialog.Header>
+											<Dialog.Title>Rate Task Owner</Dialog.Title>
+
+											<Dialog.Description>
+												Give karma (-1 – 1) to {owner?.username}
+											</Dialog.Description>
+										</Dialog.Header>
+
+										<div class="flex w-full items-center justify-center rounded-xl border p-4">
+											<KarmaCounter bind:value={ratings[owner.id]} />
+										</div>
+
+										<Dialog.Footer class="mt-4">
+											<Dialog.Close>
+												<Button onclick={() => mark_completed(task_id, owner?.id)}>
+													Submit Rating
+												</Button>
+											</Dialog.Close>
+										</Dialog.Footer>
+									</Dialog.Content>
+								</Dialog.Root>
+							{/if}
+
+							{#if task_by_ngo}
+								{@const priv = privateNotes[task_id]}
+
+								<Dialog.Root>
+									<Dialog.Trigger class="w-full">
+										<Button class="w-full bg-blue-600 dark:bg-blue-400">Mark as Complete</Button>
+									</Dialog.Trigger>
+
+									<Dialog.Content>
+										<Dialog.Header>
+											<Dialog.Title>Rate the Event</Dialog.Title>
+
+											<Dialog.Description>
+												Give karma (-1 – 1) to {owner?.username}'s event
+											</Dialog.Description>
+										</Dialog.Header>
+
+										<div class="flex w-full items-center justify-center rounded-xl p-4">
+											<KarmaCounter bind:value={ratings[owner.id]} />
+										</div>
+
+										<Input
+											class="items-home"
+											bind:value={passcode}
+											placeholder="Enter Event Passcode..."
+										/>
+
+										<Dialog.Footer class="mt-4">
+											<Dialog.Close>
+												<Button onclick={() => mark_completed_ngo(task_id, priv, owner?.id)}>
+													Submit
+												</Button>
+											</Dialog.Close>
+										</Dialog.Footer>
+									</Dialog.Content>
+								</Dialog.Root>
+							{/if}
+						{/if}
+
+						{#if record.status === 'pending'}
+							<Dialog.Root>
+								<Dialog.Trigger class="w-full">
+									<Button class="w-full" variant="destructive">
+										Remove
+										{#if !task_by_ngo}
+											Help
+										{:else}
+											Event
+										{/if}
+									</Button>
+								</Dialog.Trigger>
+
+								<Dialog.Content>
+									<Dialog.Header>
+										<Dialog.Title>Are you sure absolutely sure?</Dialog.Title>
+
+										<Dialog.Description>This action cannot be undone.</Dialog.Description>
+									</Dialog.Header>
+
+									<Dialog.Footer>
+										<Dialog.Close>
+											<Button
+												class="w-full"
+												variant="destructive"
+												type="submit"
+												onclick={() => remove_help(record.id)}
+											>
+												Yes, Confirm
+											</Button>
+										</Dialog.Close>
+									</Dialog.Footer>
+								</Dialog.Content>
+							</Dialog.Root>
+						{/if}
+					</Collapsible.Content>
+
+					<span></span>
+				</Collapsible.Root>
+			</div>
+		{/each}
+	{/if}
 </div>

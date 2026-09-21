@@ -19,7 +19,6 @@
 
 	const user = pb.authStore.record;
 
-	// Changed from props to local state
 	let records = $state<any[]>([]);
 	let volunteeredTaskIds = $state<Set<string>>(new Set());
 
@@ -29,16 +28,24 @@
 	let selected = $state('offline');
 	let offer_texts = $state<Record<string, string>>({});
 	let processing = $state(false);
+
 	let latitude = $state(0);
 	let longitude = $state(0);
+
 	let error: string | null = $state(null);
 	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+	// Loading state
+	let loading = $state(true);
 
 	function getBoundingBox(lat: number, lng: number, radiusInMeters: number) {
 		const R = 6371;
 		const radiusInKm = radiusInMeters / 1000;
+
 		const latDelta = (radiusInKm / R) * (180 / Math.PI);
-		const lngDelta = (radiusInKm / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
+		const lngDelta =
+			(radiusInKm / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
+
 		return {
 			minLat: lat - latDelta,
 			maxLat: lat + latDelta,
@@ -49,12 +56,21 @@
 
 	function distance(lat1: number, lon1: number, lat2: number, lon2: number): number {
 		const R = 6371e3;
+
 		const φ1 = (lat1 * Math.PI) / 180;
 		const φ2 = (lat2 * Math.PI) / 180;
+
 		const Δφ = ((lat2 - lat1) * Math.PI) / 180;
 		const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-		const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+
+		const a =
+			Math.sin(Δφ / 2) ** 2 +
+			Math.cos(φ1) *
+				Math.cos(φ2) *
+				Math.sin(Δλ / 2) ** 2;
+
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
 		return R * c;
 	}
 
@@ -65,18 +81,27 @@
 				reject(error);
 				return;
 			}
+
 			navigator.geolocation.getCurrentPosition(
 				(pos) => {
 					latitude = pos.coords.latitude;
 					longitude = pos.coords.longitude;
 					error = null;
-					resolve({ lat: latitude, lng: longitude });
+
+					resolve({
+						lat: latitude,
+						lng: longitude
+					});
 				},
 				(err) => {
 					error = 'Unable to retrieve location: ' + err.message;
 					reject(error);
 				},
-				{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+				{
+					enableHighAccuracy: true,
+					timeout: 10000,
+					maximumAge: 0
+				}
 			);
 		});
 	}
@@ -88,12 +113,16 @@
 		}
 
 		try {
+			loading = true;
+
 			const volunteeredStatus = await pb.collection('status').getFullList({
 				filter: `user = "${user.id}" && status != "rejected"`
 			});
 
 			volunteeredTaskIds = new Set(
-				volunteeredStatus.map((rec) => (typeof rec.task === 'object' ? rec.task.id : rec.task))
+				volunteeredStatus.map((rec) =>
+					typeof rec.task === 'object' ? rec.task.id : rec.task
+				)
 			);
 
 			if (browser) {
@@ -102,6 +131,7 @@
 			}
 
 			const box = getBoundingBox(latitude, longitude, value);
+
 			const filter =
 				selected === 'online'
 					? `online_only = true`
@@ -126,6 +156,9 @@
 			});
 		} catch (err: any) {
 			console.error('Error applying filter:', err);
+			toast.error('Could not load tasks.');
+		} finally {
+			loading = false;
 		}
 	}
 
@@ -135,8 +168,10 @@
 			goto('/login');
 			return;
 		}
+
 		if (user?.is_ngo) {
 			goto('/your_events');
+			return;
 		}
 
 		// Load saved values from localStorage
@@ -147,27 +182,31 @@
 			if (savedDistance) {
 				value = Number(savedDistance);
 			}
+
 			if (savedOnlineOnly) {
 				selected = savedOnlineOnly;
 			}
 		}
 
-		// Get location and apply filter
-		getLocation()
-			.then(() => applyFilter())
-			.catch((err) => {
-				console.error('Location error:', err);
-				toast.error('Could not get location. Please enable location access.');
-			});
+		// Get location and then load tasks
+		try {
+			await getLocation();
+			await applyFilter();
+		} catch (err) {
+			console.error('Location error:', err);
+			toast.error('Could not get location. Please enable location access.');
+			loading = false;
+		}
 	});
 
-	// Watch for changes to value and selected to trigger filter updates with debouncing
+	// Watch for changes to filters and refresh with debounce
 	$effect(() => {
 		if (browser && latitude !== 0 && longitude !== 0) {
 			value;
 			selected;
 
 			clearTimeout(timeoutId);
+
 			timeoutId = setTimeout(() => {
 				applyFilter();
 			}, 300);
@@ -200,6 +239,7 @@
 					offer: offer,
 					status: 'accepted'
 				});
+
 				toast.success('Applied for event successfully!');
 			} else {
 				await pb.collection('status').create({
@@ -208,16 +248,22 @@
 					offer: offer,
 					status: 'pending'
 				});
+
 				toast.success('Help offer sent successfully!');
 			}
 
-			// Refresh the task list instead of full page reload
+			// Refresh task list
 			await applyFilter();
+
 			processing = false;
 			return true;
 		} catch (e: any) {
 			console.error('Error creating status:', e);
-			toast.error('Error: ' + (e.data?.message || e.message));
+
+			toast.error(
+				'Error: ' + (e.data?.message || e.message)
+			);
+
 			processing = false;
 			return false;
 		}
@@ -225,148 +271,214 @@
 </script>
 
 <div class="pt-8 pr-3 pl-3">
-	<h1 class="title-font mt-4 ml-2 text-4xl"><b>Helplink.</b></h1>
+	<h1 class="title-font mt-4 ml-2 text-4xl">
+		<b>Helplink.</b>
+	</h1>
 
 	<SideMenu />
 
-	<Drawer.Root>
-		<Drawer.Trigger>
-			<Button
-				size="icon"
-				variant="outline_bu"
-				class="absolute right-10 bottom-7 rounded-full"
-				aria-label="filter"
-			>
-				<Funnel class="text-black" />
-			</Button>
-		</Drawer.Trigger>
-		<Drawer.Content>
-			<div class="mx-auto w-full max-w-sm">
-				<Drawer.Header>
-					<Drawer.Title
-						class="flex items-center justify-center space-x-2 text-4xl font-bold tracking-tighter"
-						>Add Filter</Drawer.Title
-					>
-					<br />
-				</Drawer.Header>
+	{#if loading}
+		<!-- Full loading state -->
+		<div class="flex min-h-[70vh] items-center justify-center">
+			<Spinner class="h-10 w-10" />
+		</div>
+	{:else}
+		<!-- Filter drawer -->
+		<Drawer.Root>
+			<Drawer.Trigger>
+				<Button
+					size="icon"
+					variant="outline_bu"
+					class="absolute right-10 bottom-7 rounded-full"
+					aria-label="filter"
+				>
+					<Funnel class="text-black" />
+				</Button>
+			</Drawer.Trigger>
 
-				{#if selected === 'offline'}
-					<div class="p-4 pb-0">
-						<div class="flex items-center justify-center space-x-2">
-							<div class="text-7xl font-bold tracking-tighter">
-								{value} m
+			<Drawer.Content>
+				<div class="mx-auto w-full max-w-sm">
+					<Drawer.Header>
+						<Drawer.Title
+							class="flex items-center justify-center space-x-2 text-4xl font-bold tracking-tighter"
+						>
+							Add Filter
+						</Drawer.Title>
+
+						<br />
+					</Drawer.Header>
+
+					{#if selected === 'offline'}
+						<div class="p-4 pb-0">
+							<div class="flex items-center justify-center space-x-2">
+								<div class="text-7xl font-bold tracking-tighter">
+									{value} m
+								</div>
+							</div>
+
+							<br />
+
+							<div class="flex items-center justify-center space-x-2">
+								<span>100</span>
+
+								<Slider
+									type="single"
+									bind:value
+									min={100}
+									max={5000}
+									step={10}
+								/>
+
+								<span>5km</span>
 							</div>
 						</div>
-						<br />
-						<div class="flex items-center justify-center space-x-2">
-							<span>100</span><Slider
-								type="single"
-								bind:value
-								min={100}
-								max={5000}
-								step={10}
-							/><span>5km</span>
-						</div>
-					</div>
-				{/if}
+					{/if}
 
-				<Drawer.Footer>
-					<Drawer.Close>
-						<Button class="w-80">Submit</Button>
-					</Drawer.Close>
-				</Drawer.Footer>
-			</div>
-		</Drawer.Content>
-	</Drawer.Root>
-
-	{#if records.length === 0 && latitude !== 0}
-		<div class="mt-8 flex items-center justify-center text-muted-foreground">
-			<p>No tasks found in your area...</p>
-		</div>
-	{/if}
-
-	{#each records as record}
-		{#if !volunteeredTaskIds.has(record.id)}
-			{@const user_r = record.expand?.uploaded_by}
-			<div class="apple-font mt-4 flex w-full flex-col gap-2 px-4">
-				<Collapsible.Root
-					class="mx-auto w-full max-w-sm space-y-2"
-					open={openTaskId === record.id}
-					onOpenChange={(open) => {
-						openTaskId = open ? record.id : null;
-					}}
-				>
-					<Collapsible.Trigger class="w-full max-w-sm">
-						<Item.Root variant="outline">
-							<Item.Content>
-								<div class="flex w-full gap-2">
-									<Label
-										style="cursor: pointer;"
-										onclick={() => {
-											goto(`/profile/${user_r?.username}`);
-										}}
-										class="text-xs"
-									>
-										@{user_r?.username || 'Unknown User'}
-										-
-									</Label>
-									{#if !record.by_ngo}
-										<Badge variant="secondary" class="mt-1 bg-emerald-400 text-white">Task</Badge>
-									{:else}
-										<Badge variant="secondary" class="mt-1 bg-blue-600 text-white dark:bg-blue-400">
-											Event
-										</Badge>
-									{/if}
-								</div>
-								<Separator></Separator>
-								<Item.Title class="title-font text-2xl">
-									<!--
-									{#if !record.by_ngo}
-										<b class="text-emerald-400">{record.title}</b>
-									{:else}
-										<b class="text-blue-600 dark:text-blue-400">{record.title}</b>
-									{/if}-->
-									<b>{record.title}</b>
-								</Item.Title>
-								<Label class="text-m text-zinc-800 dark:text-stone-800">
-									{record.description}
-								</Label>
-							</Item.Content>
-						</Item.Root>
-					</Collapsible.Trigger>
-					<Collapsible.Content class="items-home space-y-2 rounded-md border px-4 py-3 font-mono">
-						<Label class="text-muted-foreground"
-							>{distance(latitude, longitude, record.lat, record.lng).toFixed(2)} meters away</Label
-						>
-						{#if !record.by_ngo}
-							<Input
-								bind:value={offer_texts[record.id]}
-								placeholder="Your Offer Here..."
-								class="liquid-glass"
-							/>
-						{/if}
-						<div></div>
-						{#if !offer_texts[record.id] && !record.by_ngo}
-							<Button type="submit" class="w-full" disabled>Help</Button>
-						{:else if processing}
-							<Button disabled class="w-full">
-								<Spinner class="mr-2" />
-								Please Wait...
+					<Drawer.Footer>
+						<Drawer.Close>
+							<Button class="w-80">
+								Submit
 							</Button>
-						{:else if record.by_ngo}
-							<Button
-								class="w-full bg-blue-600 dark:bg-blue-400"
-								onclick={() => help_user(record.id, 'Attending', true)}>Attend Event!</Button
-							>
-						{:else}
-							<Button
-								class="w-full bg-background text-black"
-								onclick={() => help_user(record.id, offer_texts[record.id], false)}>Help</Button
-							>
-						{/if}
-					</Collapsible.Content>
-				</Collapsible.Root>
+						</Drawer.Close>
+					</Drawer.Footer>
+				</div>
+			</Drawer.Content>
+		</Drawer.Root>
+
+		<!-- No tasks -->
+		{#if records.length === 0 && latitude !== 0}
+			<div class="mt-8 flex items-center justify-center text-muted-foreground">
+				<p>No tasks found in your area...</p>
 			</div>
 		{/if}
-	{/each}
+
+		<!-- Tasks -->
+		{#each records as record}
+			{#if !volunteeredTaskIds.has(record.id)}
+				{@const user_r = record.expand?.uploaded_by}
+
+				<div class="apple-font mt-4 flex w-full flex-col gap-2 px-4">
+					<Collapsible.Root
+						class="mx-auto w-full max-w-sm space-y-2"
+						open={openTaskId === record.id}
+						onOpenChange={(open) => {
+							openTaskId = open ? record.id : null;
+						}}
+					>
+						<Collapsible.Trigger class="w-full max-w-sm">
+							<Item.Root variant="outline">
+								<Item.Content>
+									<div class="flex w-full gap-2">
+										<Label
+											style="cursor: pointer;"
+											onclick={() => {
+												if (user_r?.username) {
+													goto(`/profile/${user_r.username}`);
+												}
+											}}
+											class="text-xs"
+										>
+											@{user_r?.username || 'Unknown User'} -
+										</Label>
+
+										{#if !record.by_ngo}
+											<Badge
+												variant="secondary"
+												class="mt-1 bg-emerald-400 text-white"
+											>
+												Task
+											</Badge>
+										{:else}
+											<Badge
+												variant="secondary"
+												class="mt-1 bg-blue-600 text-white dark:bg-blue-400"
+											>
+												Event
+											</Badge>
+										{/if}
+									</div>
+
+									<Separator />
+
+									<Item.Title class="title-font text-2xl">
+										<b>{record.title}</b>
+									</Item.Title>
+
+									<Label class="text-m text-zinc-800 dark:text-stone-800">
+										{record.description}
+									</Label>
+								</Item.Content>
+							</Item.Root>
+						</Collapsible.Trigger>
+
+						<Collapsible.Content
+							class="items-home space-y-2 rounded-md border px-4 py-3 font-mono"
+						>
+							<Label class="text-muted-foreground">
+								{distance(
+									latitude,
+									longitude,
+									record.lat,
+									record.lng
+								).toFixed(2)}
+								meters away
+							</Label>
+
+							{#if !record.by_ngo}
+								<Input
+									bind:value={offer_texts[record.id]}
+									placeholder="Your Offer Here..."
+									class="liquid-glass"
+								/>
+							{/if}
+
+							<div></div>
+
+							{#if !offer_texts[record.id] && !record.by_ngo}
+								<Button
+									type="submit"
+									class="w-full"
+									disabled
+								>
+									Help
+								</Button>
+
+							{:else if processing}
+								<Button disabled class="w-full">
+									<Spinner class="mr-2" />
+									Please Wait...
+								</Button>
+
+							{:else if record.by_ngo}
+								<Button
+									class="w-full bg-blue-600 dark:bg-blue-400"
+									onclick={() =>
+										help_user(
+											record.id,
+											'Attending',
+											true
+										)}
+								>
+									Attend Event!
+								</Button>
+
+							{:else}
+								<Button
+									class="w-full bg-background text-black"
+									onclick={() =>
+										help_user(
+											record.id,
+											offer_texts[record.id],
+											false
+										)}
+								>
+									Help
+								</Button>
+							{/if}
+						</Collapsible.Content>
+					</Collapsible.Root>
+				</div>
+			{/if}
+		{/each}
+	{/if}
 </div>
