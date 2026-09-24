@@ -21,9 +21,18 @@
 	let loading = $state(true);
 	let loadingMore = $state(false);
 
+	// Image lightbox
+	let selectedImage = $state<string | null>(null);
+
+	// Track which descriptions are expanded
+	let expandedDescriptions = $state<Set<string>>(new Set());
+
 	const RADIUS_METERS = 10000;
 	const INITIAL_RESULTS = 30;
 	const LOAD_MORE_COUNT = 10;
+
+	// Maximum description length before collapsing
+	const DESCRIPTION_LIMIT = 300;
 
 	function distance(lat1: number, lon1: number, lat2: number, lon2: number): number {
 		const R = 6371e3;
@@ -141,21 +150,78 @@
 		return `https://api.helplink.dev/api/files/j5eoavcdnn45xdq/${record.id}/${record.image}`;
 	}
 
-	onMount(async () => {
+	function toggleDescription(id: string) {
+		const newExpanded = new Set(expandedDescriptions);
+
+		if (newExpanded.has(id)) {
+			newExpanded.delete(id);
+		} else {
+			newExpanded.add(id);
+		}
+
+		expandedDescriptions = newExpanded;
+	}
+
+	function isDescriptionExpanded(id: string) {
+		return expandedDescriptions.has(id);
+	}
+
+	function getDescription(record: any) {
+		const description = record.description || '';
+
+		if (description.length <= DESCRIPTION_LIMIT || isDescriptionExpanded(record.id)) {
+			return description;
+		}
+
+		return description.slice(0, DESCRIPTION_LIMIT).trimEnd() + '...';
+	}
+
+	function openImage(imageUrl: string) {
+		selectedImage = imageUrl;
+
+		// Prevent background page scrolling while lightbox is open
+		document.body.style.overflow = 'hidden';
+	}
+
+	function closeImage() {
+		selectedImage = null;
+
+		// Restore page scrolling
+		document.body.style.overflow = '';
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && selectedImage) {
+			closeImage();
+		}
+	}
+
+	onMount(() => {
 		if (!user) {
 			toast.error('You must be logged in');
 			goto('/login');
 			return;
 		}
 
-		try {
-			await getLocation();
-			await loadPosts();
-		} catch (err) {
-			console.error('Location error:', err);
-			toast.error('Could not get your location. Please enable location access.');
-			loading = false;
-		}
+		window.addEventListener('keydown', handleKeydown);
+
+		const init = async () => {
+			try {
+				await getLocation();
+				await loadPosts();
+			} catch (err) {
+				console.error('Location error:', err);
+				toast.error('Could not get your location. Please enable location access.');
+				loading = false;
+			}
+		};
+
+		init();
+
+		return () => {
+			window.removeEventListener('keydown', handleKeydown);
+			document.body.style.overflow = '';
+		};
 	});
 </script>
 
@@ -179,18 +245,11 @@
 			{#each displayedRecords as record}
 				{@const owner = record.expand?.owner}
 				{@const imageUrl = getImageUrl(record)}
+				{@const isExpanded = isDescriptionExpanded(record.id)}
+				{@const hasLongDescription = (record.description?.length || 0) > DESCRIPTION_LIMIT}
 
 				<Item.Root variant="outline" class="overflow-hidden rounded-2xl p-0">
 					<Item.Content class="gap-0">
-						{#if imageUrl}
-							<img
-								src={imageUrl}
-								alt={record.title || 'Social post'}
-								class="h-64 w-full object-cover"
-								loading="lazy"
-							/>
-						{/if}
-
 						<div class="p-4">
 							<div class="mb-2 flex items-center gap-2">
 								<button
@@ -220,9 +279,37 @@
 								<b>{record.title}</b>
 							</Item.Title>
 
-							<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-								{record.description}
-							</p>
+							{#if imageUrl}
+								<button
+									type="button"
+									class="mt-3 block w-full cursor-zoom-in overflow-hidden rounded-xl p-0"
+									onclick={() => openImage(imageUrl)}
+									aria-label="Open image"
+								>
+									<img
+										src={imageUrl}
+										alt={record.title || 'Social post'}
+										class="h-64 w-full object-cover transition-transform duration-200 hover:scale-[1.02]"
+										loading="lazy"
+									/>
+								</button>
+							{/if}
+
+							<div class="mt-3">
+								<p class="text-sm leading-relaxed text-muted-foreground">
+									{getDescription(record)}
+								</p>
+
+								{#if hasLongDescription}
+									<button
+										type="button"
+										class="mt-1 text-sm font-medium text-primary hover:underline"
+										onclick={() => toggleDescription(record.id)}
+									>
+										{isExpanded ? 'Read less' : 'Read more'}
+									</button>
+								{/if}
+							</div>
 						</div>
 					</Item.Content>
 				</Item.Root>
@@ -243,3 +330,34 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Image Lightbox -->
+{#if selectedImage}
+	<div
+		class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+		role="dialog"
+		aria-modal="true"
+		aria-label="Image preview"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) {
+				closeImage();
+			}
+		}}
+	>
+		<button
+			type="button"
+			class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+			onclick={closeImage}
+			aria-label="Close image"
+		>
+			×
+		</button>
+
+		<img
+			src={selectedImage}
+			alt="Expanded social post"
+			class="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+			onclick={(event) => event.stopPropagation()}
+		/>
+	</div>
+{/if}
