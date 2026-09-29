@@ -206,7 +206,7 @@
 			 * ------------------------------------------------
 			 */
 
-			const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+			const twoDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
 
 			/*
 			 * ------------------------------------------------
@@ -714,7 +714,7 @@
 									<img
 										src={imageUrl}
 										alt={record.title || 'Social post'}
-										class="h-64 w-full object-cover transition-transform duration-200 hover:scale-[1.02]"
+										class="w-full object-cover transition-transform duration-200 hover:scale-[1.02]"
 										loading="lazy"
 									/>
 								</button>
