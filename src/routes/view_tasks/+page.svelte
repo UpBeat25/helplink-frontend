@@ -120,8 +120,9 @@
 		}
 
 		if (passcode === priv) {
-			await pb.collection('users').update(ownerId, {
-				events_attended: user.events_attended + 1
+			await pb.collection('users').update(user.id, {
+				events_attended: user.events_attended + 1,
+				karma: user.karma + 50
 			});
 
 			await mark_completed(task_id, ownerId);
@@ -305,7 +306,7 @@
 											<Dialog.Title>Rate Task Owner</Dialog.Title>
 
 											<Dialog.Description>
-												Give karma (-1 – 1) to {owner?.username}
+												Give karma (0 – 5) to {owner?.username}
 											</Dialog.Description>
 										</Dialog.Header>
 
@@ -333,18 +334,6 @@
 									</Dialog.Trigger>
 
 									<Dialog.Content>
-										<Dialog.Header>
-											<Dialog.Title>Rate the Event</Dialog.Title>
-
-											<Dialog.Description>
-												Give karma (-1 – 1) to {owner?.username}'s event
-											</Dialog.Description>
-										</Dialog.Header>
-
-										<div class="flex w-full items-center justify-center rounded-xl p-4">
-											<KarmaCounter bind:value={ratings[owner.id]} />
-										</div>
-
 										<Input
 											class="items-home"
 											bind:value={passcode}

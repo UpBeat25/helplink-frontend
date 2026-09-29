@@ -2,14 +2,14 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import Plus from '@lucide/svelte/icons/plus';
   import Minus from '@lucide/svelte/icons/minus';
-  let { value = $bindable(0) } = $props();
+  let { value = $bindable(3) } = $props();
 
   function increment() {
-    if (value < 1) value++;
+    if (value < 5) value++;
   }
 
   function decrement() {
-    if (value > -1) value--;
+    if (value > 0) value--;
   }
 </script>
 

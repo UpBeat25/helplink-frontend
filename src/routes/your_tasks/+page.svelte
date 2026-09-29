@@ -63,7 +63,7 @@
 
 			// Default ratings
 			for (let status of statusList) {
-				newRatings[status.id] = 0;
+				newRatings[status.id] = 3;
 			}
 
 			// Block delete if ANY accepted or completed volunteer exists
@@ -213,7 +213,7 @@
 										<Dialog.Header>
 											<Dialog.Title>Rate Volunteers</Dialog.Title>
 											<Dialog.Description>
-												Give karma (-1 – 1) to each volunteer.
+												Give karma (0 – 5) to each volunteer.
 											</Dialog.Description>
 										</Dialog.Header>
 
